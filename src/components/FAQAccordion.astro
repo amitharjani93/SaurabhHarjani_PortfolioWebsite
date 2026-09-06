@@ -1,0 +1,161 @@
+---
+/**
+ * FAQ accordion built on <details>/<summary>: it works with no JavaScript,
+ * is keyboard operable by default, and is announced correctly by screen
+ * readers. A small script adds smooth height animation and single-open
+ * behaviour as an enhancement.
+ */
+import type { FaqItem } from '../config/faq';
+
+interface Props {
+  items: FaqItem[];
+  /** Distinguishes multiple accordions on one page. */
+  idPrefix?: string;
+  class?: string;
+}
+
+const { items, idPrefix = 'faq', class: className = '' } = Astro.props;
+---
+
+<div class:list={['faq', className]} data-faq>
+  {
+    items.map((item, i) => (
+      <details class="faq__item" name={idPrefix} id={`${idPrefix}-${i}`}>
+        <summary class="faq__summary">
+          <h3 class="faq__question">{item.question}</h3>
+          <span class="faq__marker" aria-hidden="true" />
+        </summary>
+        <div class="faq__panel">
+          <div class="faq__answer">
+            {item.answer.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+          </div>
+        </div>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  .faq {
+    border-top: 1px solid var(--color-stone-200);
+  }
+
+  .faq__item {
+    border-bottom: 1px solid var(--color-stone-200);
+  }
+
+  .faq__summary {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 3.75rem;
+    padding-block: 1.4rem;
+    cursor: pointer;
+    list-style: none;
+    transition: color 250ms var(--ease-out-soft);
+  }
+
+  .faq__summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq__question {
+    font-size: var(--text-h4);
+    font-weight: 500;
+    line-height: 1.45;
+    color: var(--color-ink-800);
+    max-width: 46ch;
+  }
+
+  .faq__summary:hover .faq__question {
+    color: var(--color-ink-600);
+  }
+
+  /* Plus that rotates into a minus — one element, two rules. */
+  .faq__marker {
+    position: relative;
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.4rem;
+  }
+
+  .faq__marker::before,
+  .faq__marker::after {
+    content: '';
+    position: absolute;
+    inset: 50% 0 auto 0;
+    height: 1px;
+    background-color: var(--color-bronze-600);
+    transition: transform 340ms var(--ease-out-soft);
+  }
+
+  .faq__marker::after {
+    transform: rotate(90deg);
+  }
+
+  .faq__item[open] .faq__marker::after {
+    transform: rotate(0deg);
+  }
+
+  .faq__panel {
+    overflow: hidden;
+  }
+
+  .faq__answer {
+    display: grid;
+    gap: 1rem;
+    padding-bottom: 1.75rem;
+    max-width: 62ch;
+    color: var(--color-body);
+  }
+
+  .faq__item[open] .faq__question {
+    color: var(--color-ink-800);
+  }
+</style>
+
+<script>
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (!reduced) {
+    document.querySelectorAll<HTMLDetailsElement>('.faq__item').forEach((item) => {
+      const panel = item.querySelector<HTMLElement>('.faq__panel');
+      if (!panel) return;
+
+      const summary = item.querySelector('summary');
+      let animation: Animation | null = null;
+
+      const animate = (from: number, to: number, open: boolean) => {
+        animation?.cancel();
+        animation = panel.animate(
+          { height: [`${from}px`, `${to}px`] },
+          { duration: 340, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)' },
+        );
+        animation.onfinish = () => {
+          item.open = open;
+          panel.style.height = '';
+          animation = null;
+        };
+      };
+
+      summary?.addEventListener('click', (event) => {
+        event.preventDefault();
+        const start = panel.offsetHeight;
+
+        if (item.open) {
+          animate(start, 0, false);
+        } else {
+          // Native `name` grouping closes siblings; measure after that settles.
+          item.open = true;
+          const end = panel.scrollHeight;
+          panel.style.height = '0px';
+          animate(0, end, true);
+        }
+      });
+    });
+  }
+</script>

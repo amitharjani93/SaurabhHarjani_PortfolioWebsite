@@ -1,0 +1,94 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import PracticeAreaCard from '../../components/PracticeAreaCard.astro';
+import ConsultationCTA from '../../components/ConsultationCTA.astro';
+import LegalDisclaimer from '../../components/LegalDisclaimer.astro';
+import FAQAccordion from '../../components/FAQAccordion.astro';
+import Reveal from '../../components/Reveal.astro';
+import { faqsFor } from '../../config/faq';
+import { absoluteUrl, url } from '../../lib/url';
+
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+const generalFaqs = faqsFor('general').slice(0, 4);
+
+const schema = [
+  {
+    '@type': 'ItemList',
+    name: 'Practice areas',
+    itemListElement: areas.map((area, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: area.data.title,
+      url: absoluteUrl(`/practice-areas/${area.id}`, Astro.site),
+    })),
+  },
+];
+---
+
+<BaseLayout
+  title="Practice Areas"
+  description="Intellectual property and trade marks, real estate and property, and civil matters and dispute resolution — the areas in which instructions are accepted."
+  path="/practice-areas"
+  schema={schema}
+>
+  <PageHeader
+    eyebrow="Practice areas"
+    title="What the practice covers."
+    lede="Three areas, set out in enough detail that you can tell before getting in touch whether your matter belongs here."
+    crumbs={[{ label: 'Practice Areas' }]}
+  />
+
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      {
+        areas.map((area, i) => (
+          <Reveal delay={i * 80}>
+            <PracticeAreaCard area={area} variant={i === 0 ? 'feature' : 'row'} serviceCount={4} />
+          </Reveal>
+        ))
+      }
+
+      <div class="mt-14 grid gap-x-16 gap-y-8 lg:grid-cols-12">
+        <div class="lg:col-span-4">
+          <h2 class="text-h4">Outside these areas</h2>
+        </div>
+        <div class="lg:col-span-7 lg:col-start-6">
+          <p class="max-w-[58ch] text-body">
+            Matters that fall outside these areas are declined rather than accepted and passed on.
+            If you are unsure whether yours belongs here, describe it briefly through the
+            <a href={url('/contact')} class="underline decoration-bronze-400 underline-offset-4 hover:decoration-bronze-700"> consultation form</a>
+            and you will receive a straight answer.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {
+    generalFaqs.length > 0 && (
+      <section class="border-t border-stone-200 bg-stone-50 py-(--spacing-section)">
+        <div class="shell">
+          <div class="grid gap-x-16 gap-y-10 lg:grid-cols-12">
+            <div class="lg:col-span-4">
+              <span class="eyebrow">Common questions</span>
+              <h2 class="mt-6 text-h3 max-w-[16ch]">Before you get in touch.</h2>
+              <a href={url('/faq')} class="link-rule mt-8">All questions</a>
+            </div>
+
+            <div class="lg:col-span-7 lg:col-start-6">
+              <FAQAccordion items={generalFaqs} idPrefix="pa-index-faq" />
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <div class="shell py-(--spacing-section-sm)">
+    <LegalDisclaimer />
+  </div>
+
+  <ConsultationCTA variant="band" />
+</BaseLayout>

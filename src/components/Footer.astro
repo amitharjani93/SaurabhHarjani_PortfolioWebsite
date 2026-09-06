@@ -1,0 +1,202 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { getCollection } from 'astro:content';
+import { primaryNav, utilityNav } from '../config/navigation';
+import { site, hasContactDetails, formattedAddress } from '../config/site';
+import { url } from '../lib/url';
+
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+const address = formattedAddress();
+const year = new Date().getFullYear();
+const yearRange = year > site.foundingYear ? `${site.foundingYear}–${year}` : `${year}`;
+
+const socials = [
+  { name: 'linkedin' as const, href: site.social.linkedin, label: 'LinkedIn' },
+  { name: 'x' as const, href: site.social.x, label: 'X' },
+  { name: 'instagram' as const, href: site.social.instagram, label: 'Instagram' },
+].filter((s) => Boolean(s.href));
+---
+
+<footer class="bg-ink-900 text-paper">
+  <div class="shell">
+    <div class="grid gap-14 border-b border-white/10 py-(--spacing-section-sm) lg:grid-cols-12 lg:gap-10">
+      <!-- Identity -->
+      <div class="lg:col-span-4">
+        <Logo variant="inline" size="md" tone="inverse" />
+        <p class="mt-7 max-w-xs text-sm text-paper/60">
+          {site.positioning}
+        </p>
+        {
+          site.bar.council && (
+            <p class="mt-5 text-caption text-paper/45">
+              Enrolled with the {site.bar.council}
+              {site.bar.enrolmentNumber && <> · {site.bar.enrolmentNumber}</>}
+            </p>
+          )
+        }
+        {
+          socials.length > 0 && (
+            <ul class="mt-7 flex gap-2">
+              {socials.map((s) => (
+                <li>
+                  <a
+                    href={s.href!}
+                    rel="noopener noreferrer me"
+                    target="_blank"
+                    class="inline-flex size-11 items-center justify-center border border-white/12 text-paper/65 transition-colors duration-300 hover:border-bronze-500 hover:text-paper"
+                  >
+                    <span class="sr-only">{s.label}</span>
+                    <Icon name={s.name} size={17} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+
+      <!-- Navigation -->
+      <nav class="lg:col-span-2" aria-label="Footer">
+        <h2 class="footer-heading">Site</h2>
+        <ul class="footer-list">
+          {
+            primaryNav.map((item) => (
+              <li>
+                <a href={url(item.href)} class="footer-link">
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+          {
+            utilityNav
+              .filter((i) => i.href === '/faq')
+              .map((item) => (
+                <li>
+                  <a href={url(item.href)} class="footer-link">
+                    FAQ
+                  </a>
+                </li>
+              ))
+          }
+        </ul>
+      </nav>
+
+      <!-- Practice areas -->
+      <nav class="lg:col-span-3" aria-label="Practice areas">
+        <h2 class="footer-heading">Practice</h2>
+        <ul class="footer-list">
+          {
+            areas.map((area) => (
+              <li>
+                <a href={url(`/practice-areas/${area.id}`)} class="footer-link">
+                  {area.data.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <!-- Contact -->
+      <div class="lg:col-span-3">
+        <h2 class="footer-heading">Contact</h2>
+        {
+          hasContactDetails ? (
+            <address class="mt-5 grid gap-3 text-sm not-italic text-paper/65">
+              {site.contact.phone && (
+                <a href={`tel:${site.contact.phone.replace(/\s/g, '')}`} class="footer-link">
+                  {site.contact.phone}
+                </a>
+              )}
+              {site.contact.email && (
+                <a href={`mailto:${site.contact.email}`} class="footer-link break-all">
+                  {site.contact.email}
+                </a>
+              )}
+              {address.length > 0 && (
+                <span class="not-italic leading-relaxed">
+                  {address.map((line, i) => (
+                    <>
+                      {i > 0 && <br />}
+                      {line}
+                    </>
+                  ))}
+                </span>
+              )}
+            </address>
+          ) : (
+            <p class="mt-5 text-sm text-paper/55">
+              {/* Contact details appear here once they are set in src/config/site.ts */}
+              Contact details are being finalised. Please use the consultation form in the meantime.
+            </p>
+          )
+        }
+
+        <a href={url('/contact')} class="mt-5 inline-flex min-h-11 items-center gap-2.5 text-caption tracking-[0.08em] uppercase text-bronze-300 transition-colors duration-300 hover:text-paper">
+          Request a consultation
+          <Icon name="arrow-right" size={16} />
+        </a>
+      </div>
+    </div>
+
+    <!-- Disclaimer + copyright -->
+    <div class="flex flex-col gap-6 py-8 text-caption text-paper/45 md:flex-row md:items-start md:justify-between">
+      <p class="max-w-xl">
+        {/* ⚖️ Compliance wording — see src/config/site.ts › compliance.footerDisclaimer */}
+        {site.compliance.footerDisclaimer}
+      </p>
+
+      <div class="flex flex-col gap-3 md:items-end">
+        <ul class="flex flex-wrap gap-x-6">
+          {
+            utilityNav
+              .filter((i) => i.href !== '/faq')
+              .map((item) => (
+                <li>
+                  <a
+                    href={url(item.href)}
+                    class="inline-flex min-h-11 items-center transition-colors duration-300 hover:text-paper"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+          }
+        </ul>
+        <p class="nums-tabular">© {yearRange} {site.name}. All rights reserved.</p>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer-heading {
+    font-family: var(--font-sans);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-bronze-400);
+  }
+
+  .footer-list {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    font-size: 0.875rem;
+    color: color-mix(in srgb, var(--color-paper) 66%, transparent);
+    transition: color 240ms var(--ease-out-soft);
+  }
+
+  .footer-link:hover {
+    color: var(--color-paper);
+  }
+</style>

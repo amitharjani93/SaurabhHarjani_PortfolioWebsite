@@ -1,0 +1,65 @@
+---
+import { url, absoluteUrl } from '../lib/url';
+import type { Crumb } from '../lib/types';
+
+interface Props {
+  items: Crumb[];
+  tone?: 'ink' | 'inverse';
+  class?: string;
+}
+
+const { items, tone = 'ink', class: className = '' } = Astro.props;
+
+const trail: Crumb[] = [{ label: 'Home', href: '/' }, ...items];
+---
+
+<nav aria-label="Breadcrumb" class={className}>
+  <ol
+    class:list={[
+      'flex flex-wrap items-center gap-x-2.5 gap-y-1 text-caption',
+      tone === 'inverse' ? 'text-paper/55' : 'text-muted',
+    ]}
+  >
+    {
+      trail.map((crumb, i) => (
+        <li class="flex items-center gap-2.5">
+          {i > 0 && (
+            <span aria-hidden="true" class={tone === 'inverse' ? 'text-paper/30' : 'text-stone-400'}>
+              /
+            </span>
+          )}
+          {crumb.href && i < trail.length - 1 ? (
+            <a
+              href={url(crumb.href)}
+              class:list={[
+                'inline-flex min-h-11 items-center transition-colors duration-300',
+                tone === 'inverse' ? 'hover:text-paper' : 'hover:text-ink-800',
+              ]}
+            >
+              {crumb.label}
+            </a>
+          ) : (
+            <span aria-current="page" class={tone === 'inverse' ? 'text-paper/85' : 'text-ink-700'}>
+              {crumb.label}
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<script
+  is:inline
+  type="application/ld+json"
+  set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((crumb, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: crumb.label,
+      ...(crumb.href ? { item: absoluteUrl(crumb.href, Astro.site) } : {}),
+    })),
+  })}
+/>

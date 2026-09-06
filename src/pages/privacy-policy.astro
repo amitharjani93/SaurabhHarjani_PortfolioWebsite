@@ -1,0 +1,164 @@
+---
+/**
+ * ⚖️ REVIEW REQUIRED
+ * ---------------------------------------------------------------------------
+ * Draft privacy wording. It describes how this site behaves as built:
+ *   • no analytics unless a provider is configured in src/config/site.ts
+ *   • no cookies set by the site itself
+ *   • the consultation form either posts to a configured endpoint or hands the
+ *     details to the visitor's own email client
+ * If any of those change, this page must change with them. The final wording
+ * must be reviewed by the advocate before publication.
+ * ---------------------------------------------------------------------------
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { site } from '../config/site';
+import { url } from '../lib/url';
+import { getDeliveryMode } from '../services/consultation';
+
+const updated = 'Not yet published';
+
+const mode = getDeliveryMode({
+  endpoint: site.consultation.endpoint,
+  email: site.contact.email,
+  subjectPrefix: '',
+});
+
+const analyticsEnabled = site.analytics.provider !== 'none';
+---
+
+<BaseLayout
+  title="Privacy Policy"
+  description="What information this website collects, how consultation inquiries are handled, and how long details are kept."
+  path="/privacy-policy"
+>
+  <PageHeader
+    eyebrow="Legal"
+    title="Privacy policy."
+    lede="What this website collects, and what happens to anything you send through it."
+    crumbs={[{ label: 'Privacy Policy' }]}
+  />
+
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-10 lg:grid-cols-12">
+        <div class="lg:col-span-3">
+          <p class="text-micro tracking-[0.18em] uppercase text-muted">Last updated</p>
+          <p class="mt-2 font-display text-ink-800">{updated}</p>
+        </div>
+
+        <div class="prose-legal lg:col-span-8 lg:col-start-5">
+          <p class="text-lead">
+            This website is deliberately plain. It sets no cookies of its own, runs no advertising
+            technology, and collects nothing about you unless you choose to send an inquiry.
+          </p>
+
+          <h2>Who is responsible</h2>
+          <p>
+            {site.name}, an independent advocate, is responsible for this website and for any
+            personal information you send through it.
+            {
+              site.contact.email && (
+                <>
+                  {' '}
+                  Questions about privacy can be sent to <a href={`mailto:${site.contact.email}`}>{site.contact.email}</a>.
+                </>
+              )
+            }
+          </p>
+
+          <h2>What is collected</h2>
+          <p>
+            If you complete the consultation form, you provide your name, email address, optionally a
+            telephone number, your preferred method and time of contact, the area your matter relates
+            to, and a short description of it. Nothing else is collected from the form.
+          </p>
+          <p>
+            Please do not include confidential, privileged or time-sensitive information in that
+            description. The
+            <a href={url('/legal-disclaimer')}>legal disclaimer</a> explains why.
+          </p>
+
+          <h2>How an inquiry is transmitted</h2>
+          {
+            mode === 'endpoint' ? (
+              <p>
+                Inquiries are sent over an encrypted connection to a service that forwards them to the
+                practice. They are used only to respond to you and to assess whether the matter can be
+                accepted.
+              </p>
+            ) : mode === 'email' ? (
+              <p>
+                This site is hosted statically and has no server that can receive your details.
+                Submitting the form composes an email in your own mail application, pre-filled with
+                what you entered. Nothing leaves your device until you send that email yourself, and
+                the message then travels through your own email provider.
+              </p>
+            ) : (
+              <p>
+                Online submission is not currently configured on this site, so the form does not
+                transmit anything.
+              </p>
+            )
+          }
+
+          <h2>Cookies and storage</h2>
+          <p>
+            No cookies are set by this website. Nothing is stored in your browser except, where the
+            entry acknowledgement is in use, a single session entry recording that you have
+            acknowledged it — which is cleared when you close the browser.
+          </p>
+
+          <h2>Analytics</h2>
+          {
+            analyticsEnabled ? (
+              <p>
+                Aggregate, cookieless usage statistics are collected to understand which pages are
+                read. No personal information is gathered and visitors are not tracked across sites.
+              </p>
+            ) : (
+              <p>
+                No analytics or tracking scripts are loaded. Page visits are not measured, and no
+                third-party script runs on this site.
+              </p>
+            )
+          }
+
+          <h2>Hosting</h2>
+          <p>
+            The site is served as static files by a hosting provider, which may keep standard server
+            logs including IP addresses for security and operational purposes. Those logs are held by
+            the provider under its own terms and are not used by the practice to identify visitors.
+          </p>
+
+          <h2>How long details are kept</h2>
+          <p>
+            Inquiries that do not lead to an engagement are retained only as long as needed to
+            respond and to check for conflicts, and are then deleted. Where a matter is accepted,
+            records are kept in accordance with the professional obligations that apply to advocates.
+          </p>
+
+          <h2>Sharing</h2>
+          <p>
+            Personal information is not sold, rented or shared for marketing. It may be disclosed
+            only where required by law or by an order of a competent authority.
+          </p>
+
+          <h2>Your choices</h2>
+          <p>
+            You may ask what information about you is held, ask for it to be corrected, or ask for it
+            to be deleted where there is no obligation to retain it. Requests can be made through the
+            <a href={url('/contact')}>contact page</a>.
+          </p>
+
+          <h2>Changes</h2>
+          <p>
+            If this website changes in a way that affects the above — for example if a form backend
+            or analytics is introduced — this page will be updated before the change goes live.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

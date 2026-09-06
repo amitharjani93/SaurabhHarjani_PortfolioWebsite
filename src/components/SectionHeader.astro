@@ -1,0 +1,63 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  /** Rendered beneath the title at reading measure. */
+  lede?: string;
+  align?: 'left' | 'center';
+  as?: 'h2' | 'h3';
+  tone?: 'ink' | 'inverse';
+  class?: string;
+  /** Constrains the heading so it breaks where intended. */
+  titleClass?: string;
+}
+
+const {
+  eyebrow,
+  title,
+  lede,
+  align = 'left',
+  as: Tag = 'h2',
+  tone = 'ink',
+  class: className = '',
+  titleClass = 'max-w-[22ch]',
+} = Astro.props;
+---
+
+<div
+  class:list={[
+    'flex flex-col gap-5',
+    align === 'center' && 'items-center text-center',
+    tone === 'inverse' && 'on-ink',
+    className,
+  ]}
+>
+  {eyebrow && <span class="eyebrow">{eyebrow}</span>}
+
+  <Tag
+    class:list={[
+      'text-h2',
+      titleClass,
+      tone === 'inverse' ? 'text-paper' : 'text-ink-800',
+      align === 'center' && 'mx-auto',
+    ]}
+  >
+    {title}
+  </Tag>
+
+  {
+    lede && (
+      <p
+        class:list={[
+          'text-lead measure',
+          tone === 'inverse' ? 'text-paper/70' : 'text-body',
+          align === 'center' && 'mx-auto',
+        ]}
+      >
+        {lede}
+      </p>
+    )
+  }
+
+  <slot />
+</div>

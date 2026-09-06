@@ -1,0 +1,365 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Portrait from '../components/Portrait.astro';
+import ConsultationCTA from '../components/ConsultationCTA.astro';
+import Reveal from '../components/Reveal.astro';
+import LegalDisclaimer from '../components/LegalDisclaimer.astro';
+import { getCollection } from 'astro:content';
+import { site, type Credential } from '../config/site';
+import { url } from '../lib/url';
+
+const p = site.profile;
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+
+/** Credential blocks render only when they contain entries. */
+const credentialBlocks: { title: string; items: Credential[] }[] = [
+  { title: 'Experience', items: p.experience },
+  { title: 'Education', items: p.education },
+  { title: 'Qualifications', items: p.qualifications },
+  { title: 'Professional memberships', items: p.memberships },
+].filter((block) => block.items.length > 0);
+
+const barLines = [
+  site.bar.council ? { label: 'Bar Council', value: site.bar.council } : null,
+  site.bar.enrolmentNumber ? { label: 'Enrolment number', value: site.bar.enrolmentNumber } : null,
+  site.bar.enrolmentYear ? { label: 'Enrolled since', value: site.bar.enrolmentYear } : null,
+].filter((v): v is { label: string; value: string } => v !== null);
+
+const hasCredentials = credentialBlocks.length > 0 || barLines.length > 0 || p.jurisdictions.length > 0;
+---
+
+<BaseLayout
+  title="Profile"
+  description={`${site.name}, ${site.title} — professional profile, philosophy of practice, areas of focus and how matters are handled.`}
+  path="/profile"
+  type="profile"
+>
+  <PageHeader
+    eyebrow="Profile"
+    title={site.name}
+    lede={p.summary}
+    statement={site.positioning}
+    crumbs={[{ label: 'Profile' }]}
+  />
+
+  <!-- ---------------------------------------------------------- Biography -->
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-14 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <Portrait ratio="aspect-[4/5]" class="max-w-sm lg:sticky lg:top-28 lg:max-w-none" loading="eager" />
+
+          {
+            !site.assets.portrait && (
+              <p class="mt-4 text-caption text-muted">
+                {/* Add a photograph at public/profile/portrait.jpg and set assets.portrait in src/config/site.ts */}
+                A professional photograph will appear here.
+              </p>
+            )
+          }
+        </div>
+
+        <div class="lg:col-span-6 lg:col-start-7">
+          <span class="eyebrow">Introduction</span>
+
+          <div class="prose-legal mt-8 text-lead">
+            {p.biography.map((paragraph) => <p>{paragraph}</p>)}
+          </div>
+
+          {
+            p.languages.length > 0 && (
+              <p class="mt-10 border-t border-stone-200 pt-6 text-caption text-muted">
+                <span class="tracking-[0.16em] uppercase text-bronze-700">Languages</span>
+                <span class="mt-2 block text-body">{p.languages.join(' · ')}</span>
+              </p>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- Philosophy -->
+  <section class="bg-ink-800 py-(--spacing-section) text-paper">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-12 lg:grid-cols-12">
+        <div class="lg:col-span-4">
+          <span class="eyebrow eyebrow-inverse">Philosophy</span>
+          <h2 class="mt-6 text-h2 text-paper max-w-[14ch]">How the work is approached.</h2>
+        </div>
+
+        <div class="lg:col-span-7 lg:col-start-6">
+          <dl class="grid gap-0">
+            {
+              p.philosophy.map((item, i) => (
+                <Reveal delay={i * 70}>
+                  <div class="philosophy-item">
+                    <dt class="philosophy-item__heading">{item.heading}</dt>
+                    <dd class="philosophy-item__body">{item.body}</dd>
+                  </div>
+                </Reveal>
+              ))
+            }
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------ Areas of focus -->
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-12 lg:grid-cols-12">
+        <div class="lg:col-span-4">
+          <span class="eyebrow">Areas of focus</span>
+          <h2 class="mt-6 text-h3 max-w-[16ch]">Where matters are accepted.</h2>
+          <p class="mt-6 max-w-[38ch] text-body">
+            Instructions outside these areas are declined rather than accepted and passed on.
+          </p>
+        </div>
+
+        <ul class="lg:col-span-7 lg:col-start-6">
+          {
+            areas.map((area) => (
+              <li class="focus-item">
+                <a href={url(`/practice-areas/${area.id}`)} class="focus-item__link">
+                  <span class="focus-item__numeral nums-tabular" aria-hidden="true">
+                    {area.data.numeral}
+                  </span>
+                  <span>
+                    <span class="focus-item__title">{area.data.title}</span>
+                    <span class="focus-item__summary">{area.data.summary}</span>
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------- Credentials -->
+  <section class="border-t border-stone-200 bg-stone-50 py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-12 lg:grid-cols-12">
+        <div class="lg:col-span-4">
+          <span class="eyebrow">Credentials</span>
+          <h2 class="mt-6 text-h3 max-w-[16ch]">Enrolment, education and standing.</h2>
+        </div>
+
+        <div class="lg:col-span-7 lg:col-start-6">
+          {
+            hasCredentials ? (
+              <div class="grid gap-12">
+                {barLines.length > 0 && (
+                  <div>
+                    <h3 class="credential__heading">Bar enrolment</h3>
+                    <dl class="credential__list">
+                      {barLines.map((line) => (
+                        <div class="credential__row">
+                          <dt class="credential__label">{line.label}</dt>
+                          <dd class="credential__value">{line.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
+
+                {credentialBlocks.map((block) => (
+                  <div>
+                    <h3 class="credential__heading">{block.title}</h3>
+                    <dl class="credential__list">
+                      {block.items.map((item) => (
+                        <div class="credential__row">
+                          <dt class="credential__label">{item.meta ?? ''}</dt>
+                          <dd class="credential__value">
+                            <span class="credential__value-main">{item.label}</span>
+                            <span class="credential__value-detail">{item.detail}</span>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                ))}
+
+                {p.jurisdictions.length > 0 && (
+                  <div>
+                    <h3 class="credential__heading">Courts &amp; forums</h3>
+                    <ul class="mt-5 flex flex-wrap gap-x-3 gap-y-2">
+                      {p.jurisdictions.map((court) => (
+                        <li class="credential__chip">{court}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Deliberately empty until real details are supplied. Nothing here
+                 is invented — see src/config/site.ts › bar and profile. */
+              <div class="credential__pending">
+                <p class="text-lead text-ink-700 max-w-[46ch]">
+                  Bar enrolment details, education, qualifications, professional memberships and the
+                  courts before which the practice appears will be published here.
+                </p>
+                <p class="mt-5 max-w-[52ch] text-body">
+                  These are matters of record, and nothing is stated on this page until it can be
+                  stated exactly. If you need this information before instructing, please ask and it
+                  will be provided directly.
+                </p>
+                <a href={url('/contact')} class="link-rule mt-8">Ask for details</a>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="shell py-(--spacing-section-sm)">
+    <LegalDisclaimer />
+  </div>
+
+  <ConsultationCTA
+    variant="band"
+    heading="Have a matter you would like assessed?"
+    lede="Send a short summary. You will be told whether it falls within the practice and what a first consultation would involve."
+  />
+</BaseLayout>
+
+<style>
+  .philosophy-item {
+    display: grid;
+    gap: 0.75rem;
+    padding-block: 1.75rem;
+    border-top: 1px solid rgb(255 255 255 / 0.14);
+  }
+
+  .philosophy-item__heading {
+    font-family: var(--font-display);
+    font-size: var(--text-h4);
+    color: var(--color-paper);
+  }
+
+  .philosophy-item__body {
+    font-size: 0.9375rem;
+    line-height: 1.75;
+    color: color-mix(in srgb, var(--color-paper) 68%, transparent);
+    max-width: 58ch;
+  }
+
+  .focus-item {
+    border-top: 1px solid var(--color-stone-200);
+  }
+
+  .focus-item:first-child {
+    border-top-color: var(--color-ink-800);
+  }
+
+  .focus-item:last-child {
+    border-bottom: 1px solid var(--color-stone-200);
+  }
+
+  .focus-item__link {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    gap: 1rem;
+    padding-block: 1.6rem;
+    transition: padding-left 320ms var(--ease-out-soft);
+  }
+
+  .focus-item__link:hover {
+    padding-left: 0.35rem;
+  }
+
+  .focus-item__numeral {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    color: var(--color-bronze-600);
+    padding-top: 0.3rem;
+  }
+
+  .focus-item__title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.1875rem;
+    color: var(--color-ink-800);
+  }
+
+  .focus-item__summary {
+    display: block;
+    margin-top: 0.45rem;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--color-muted);
+    max-width: 52ch;
+  }
+
+  .credential__heading {
+    font-family: var(--font-sans);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-bronze-700);
+  }
+
+  .credential__list {
+    margin-top: 1.25rem;
+    border-top: 1px solid var(--color-stone-200);
+  }
+
+  .credential__row {
+    display: grid;
+    gap: 0.35rem 1.5rem;
+    padding-block: 1.1rem;
+    border-bottom: 1px solid var(--color-stone-200);
+  }
+
+  @media (min-width: 640px) {
+    .credential__row {
+      grid-template-columns: 9rem 1fr;
+      align-items: baseline;
+    }
+  }
+
+  .credential__label {
+    font-size: var(--text-caption);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .credential__value-main,
+  .credential__value {
+    font-size: 1rem;
+    color: var(--color-ink-800);
+  }
+
+  .credential__value-main {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+  }
+
+  .credential__value-detail {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.9375rem;
+    color: var(--color-body);
+  }
+
+  .credential__chip {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-stone-300);
+    font-size: 0.875rem;
+    color: var(--color-ink-700);
+  }
+
+  .credential__pending {
+    border-left: 1px solid var(--color-bronze-500);
+    padding-left: 1.75rem;
+  }
+</style>

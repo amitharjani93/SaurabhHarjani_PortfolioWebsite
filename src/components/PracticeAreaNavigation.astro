@@ -1,0 +1,114 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from '../components/Icon.astro';
+import { url } from '../lib/url';
+
+interface Props {
+  /** Slug of the area currently being viewed, if any. */
+  current?: string;
+  heading?: string;
+  class?: string;
+}
+
+const { current, heading = 'Other areas of practice', class: className = '' } = Astro.props;
+
+const areas = (await getCollection('practice-areas'))
+  .sort((a, b) => a.data.order - b.data.order)
+  .filter((a) => a.id !== current);
+---
+
+{
+  areas.length > 0 && (
+    <nav class:list={['pa-nav', className]} aria-label={heading}>
+      <h2 class="pa-nav__heading">{heading}</h2>
+
+      <ul class="pa-nav__list">
+        {areas.map((area) => (
+          <li>
+            <a href={url(`/practice-areas/${area.id}`)} class="pa-nav__link">
+              <span class="pa-nav__numeral nums-tabular" aria-hidden="true">
+                {area.data.numeral}
+              </span>
+              <span class="pa-nav__body">
+                <span class="pa-nav__title">{area.data.title}</span>
+                <span class="pa-nav__summary">{area.data.summary}</span>
+              </span>
+              <Icon name="arrow-right" size={16} class="pa-nav__arrow" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<style>
+  .pa-nav__heading {
+    font-family: var(--font-sans);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-bronze-700);
+  }
+
+  .pa-nav__list {
+    margin-top: 1.5rem;
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--color-ink-800);
+  }
+
+  .pa-nav__link {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    min-height: 4.5rem;
+    padding-block: 1.4rem;
+    border-bottom: 1px solid var(--color-stone-200);
+    transition: border-color 320ms var(--ease-out-soft);
+  }
+
+  .pa-nav__link:hover {
+    border-bottom-color: var(--color-bronze-500);
+  }
+
+  .pa-nav__numeral {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    color: var(--color-bronze-600);
+    align-self: start;
+    padding-top: 0.35rem;
+  }
+
+  .pa-nav__body {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .pa-nav__title {
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    color: var(--color-ink-800);
+  }
+
+  .pa-nav__summary {
+    font-size: var(--text-caption);
+    line-height: 1.6;
+    color: var(--color-muted);
+    max-width: 52ch;
+  }
+
+  .pa-nav__arrow {
+    color: var(--color-stone-400);
+    transition:
+      transform 320ms var(--ease-out-soft),
+      color 320ms var(--ease-out-soft);
+  }
+
+  .pa-nav__link:hover .pa-nav__arrow {
+    transform: translateX(4px);
+    color: var(--color-bronze-600);
+  }
+</style>

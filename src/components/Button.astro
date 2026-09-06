@@ -1,0 +1,70 @@
+---
+import { url } from '../lib/url';
+
+interface Props {
+  href?: string;
+  type?: 'button' | 'submit';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'inverse';
+  size?: 'md' | 'lg';
+  class?: string;
+  disabled?: boolean;
+  id?: string;
+  'aria-label'?: string;
+}
+
+const {
+  href,
+  type = 'button',
+  variant = 'primary',
+  size = 'md',
+  class: className = '',
+  disabled = false,
+  ...rest
+} = Astro.props;
+
+const base =
+  'btn inline-flex items-center justify-center gap-2.5 font-medium tracking-[0.06em] uppercase ' +
+  'transition-[background-color,color,border-color,box-shadow] duration-300 ' +
+  '[transition-timing-function:var(--ease-out-soft)] disabled:opacity-50 disabled:pointer-events-none';
+
+const sizes = {
+  md: 'min-h-11 px-6 text-[0.75rem]',
+  lg: 'min-h-13 px-8 text-[0.8125rem]',
+};
+
+const variants = {
+  primary: 'bg-ink-800 text-paper border border-ink-800 hover:bg-ink-700 hover:border-ink-700',
+  secondary: 'bg-transparent text-ink-800 border border-stone-300 hover:border-ink-800 hover:bg-ink-800/[0.035]',
+  inverse: 'bg-paper text-ink-800 border border-paper hover:bg-bronze-100 hover:border-bronze-100',
+  ghost: 'bg-transparent text-ink-800 border border-transparent hover:bg-ink-800/[0.05] px-4',
+};
+
+const classes = [base, sizes[size], variants[variant], className].join(' ');
+const isExternal = href ? /^(https?:)?\/\/|^mailto:|^tel:/.test(href) : false;
+---
+
+{
+  href ? (
+    <a
+      href={isExternal ? href : url(href)}
+      class={classes}
+      {...(isExternal ? { rel: 'noopener noreferrer', target: '_blank' } : {})}
+      {...rest}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={classes} disabled={disabled} {...rest}>
+      <slot />
+    </button>
+  )
+}
+
+<style>
+  /* A 1px inner highlight gives the solid buttons a slight physical edge
+     without resorting to a shadow or a gradient. */
+  .btn {
+    position: relative;
+    border-radius: var(--radius-sm);
+  }
+</style>

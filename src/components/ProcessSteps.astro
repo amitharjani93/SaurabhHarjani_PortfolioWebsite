@@ -1,0 +1,82 @@
+---
+import SectionHeader from './SectionHeader.astro';
+import Reveal from './Reveal.astro';
+import { processSteps } from '../config/process';
+---
+
+<section class="relative overflow-hidden bg-ink-800 py-(--spacing-section) text-paper">
+  <div class="process__rules" aria-hidden="true"></div>
+
+  <div class="shell relative">
+    <SectionHeader
+      eyebrow="How I work"
+      title="Four steps, in that order."
+      lede="An engagement follows the same shape whatever the matter. It is set out here so you know what to expect before the first conversation."
+      tone="inverse"
+      titleClass="max-w-[16ch]"
+    />
+
+    <ol class="mt-16 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:mt-20 lg:grid-cols-4 lg:gap-y-0">
+      {
+        processSteps.map((step, i) => (
+          <Reveal as="li" delay={i * 90} class="process__step">
+            <span class="process__numeral nums-tabular" aria-hidden="true">
+              {step.numeral}
+            </span>
+            <h3 class="process__title">{step.title}</h3>
+            <p class="process__body">{step.body}</p>
+          </Reveal>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .process__rules {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to right, rgb(255 255 255 / 0.06) 1px, transparent 1px);
+    background-size: 25% 100%;
+    mask-image: linear-gradient(to bottom, transparent, black 40%, transparent);
+  }
+
+  /* Sits on a <Reveal> root, which scoped styles do not reach. */
+  :global(.process__step) {
+    position: relative;
+    padding-top: 1.75rem;
+    border-top: 1px solid rgb(255 255 255 / 0.16);
+  }
+
+  /* A bronze tick on the rule marks each step without adding an icon. */
+  :global(.process__step)::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 1.75rem;
+    height: 1px;
+    background-color: var(--color-bronze-500);
+  }
+
+  .process__numeral {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    color: var(--color-bronze-400);
+  }
+
+  .process__title {
+    margin-top: 0.9rem;
+    font-size: var(--text-h4);
+    color: var(--color-paper);
+  }
+
+  .process__body {
+    margin-top: 0.9rem;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: color-mix(in srgb, var(--color-paper) 66%, transparent);
+    max-width: 34ch;
+  }
+</style>

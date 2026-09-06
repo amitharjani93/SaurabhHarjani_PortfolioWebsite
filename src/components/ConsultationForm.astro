@@ -1,0 +1,433 @@
+---
+import { getCollection } from 'astro:content';
+import FormField from './FormField.astro';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import LegalDisclaimer from './LegalDisclaimer.astro';
+import { site } from '../config/site';
+import { getDeliveryMode } from '../services/consultation';
+
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+
+const transport = {
+  endpoint: site.consultation.endpoint,
+  email: site.contact.email,
+  subjectPrefix: 'Consultation inquiry — ',
+};
+
+const mode = getDeliveryMode(transport);
+
+const practiceOptions = [
+  ...areas.map((a) => ({ value: a.data.title, label: a.data.title })),
+  { value: 'Another matter', label: 'Another matter / not sure' },
+];
+
+const timeOptions = site.consultation.preferredTimes.map((t) => ({ value: t, label: t }));
+
+const showAttachments = site.consultation.attachmentsEnabled && mode === 'endpoint';
+---
+
+<div class="consult-form">
+  <LegalDisclaimer variant="form" class="mb-9" />
+
+  <form
+    data-consultation-form
+    novalidate
+    data-endpoint={transport.endpoint}
+    data-email={transport.email ?? ''}
+    data-subject-prefix={transport.subjectPrefix}
+  >
+    <div class="grid gap-7 sm:grid-cols-2">
+      <FormField
+        id="fullName"
+        name="fullName"
+        label="Full name"
+        autocomplete="name"
+        placeholder="As you would like to be addressed"
+        required
+      />
+
+      <FormField id="email" name="email" label="Email" type="email" autocomplete="email" required />
+
+      <FormField
+        id="phone"
+        name="phone"
+        label="Phone"
+        type="tel"
+        autocomplete="tel"
+        placeholder="Including country code"
+        optional
+      />
+
+      <FormField
+        id="preferredTime"
+        name="preferredTime"
+        label="Preferred time to speak"
+        type="select"
+        options={timeOptions}
+        placeholder="No preference"
+      />
+    </div>
+
+    <div class="mt-7">
+      <FormField
+        id="preferredContact"
+        name="preferredContact"
+        label="Preferred contact method"
+        type="radio"
+        options={[
+          { value: 'Email', label: 'Email' },
+          { value: 'Phone', label: 'Phone' },
+          ...(site.contact.whatsappEnabled ? [{ value: 'WhatsApp', label: 'WhatsApp' }] : []),
+        ]}
+      />
+    </div>
+
+    <div class="mt-7">
+      <FormField
+        id="practiceArea"
+        name="practiceArea"
+        label="What does the matter relate to?"
+        type="select"
+        options={practiceOptions}
+        placeholder="Please choose an area"
+        required
+      />
+    </div>
+
+    <div class="mt-7">
+      <FormField
+        id="message"
+        name="message"
+        label="Brief description of the matter"
+        type="textarea"
+        rows={7}
+        maxlength={3000}
+        required
+        hint="A few lines is enough — what happened, roughly when, and any deadline you are working to. Please leave out names and details you would not want to send by ordinary email."
+        placeholder="For example: I received an examination report on a trade mark application last week and need to respond."
+      />
+      <p class="mt-2 text-caption text-muted nums-tabular" data-counter aria-live="polite"></p>
+    </div>
+
+    {
+      showAttachments && (
+        <div class="mt-7">
+          <label for="attachment" class="field-file">
+            <Icon name="document" size={18} class="text-bronze-600" />
+            <span>
+              <span class="field-file__label">Attach a document</span>
+              <span class="field-file__hint">Optional · PDF, DOC or image, up to 5 MB</span>
+            </span>
+            <input id="attachment" name="attachment" type="file" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" class="sr-only" />
+          </label>
+          <p class="mt-2 text-caption text-muted" data-file-name aria-live="polite" />
+        </div>
+      )
+    }
+
+    <div class="mt-9 border-t border-stone-200 pt-8">
+      <FormField id="consent" name="consent" label="Consent" type="checkbox">
+        I have read the note above. I understand that sending this inquiry does not create an
+        advocate-client relationship and that the matter has not been accepted.
+      </FormField>
+    </div>
+
+    {/* Honeypot — hidden from people, tempting to bots. */}
+    <div class="hp" aria-hidden="true">
+      <label for="company">Company</label>
+      <input id="company" name="company" type="text" tabindex="-1" autocomplete="off" />
+    </div>
+
+    <div class="mt-9 flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-7">
+      <Button type="submit" variant="primary" size="lg" class="w-full sm:w-auto" data-submit>
+        <span data-submit-label>
+          {mode === 'email' ? 'Compose Inquiry Email' : 'Send Inquiry'}
+        </span>
+        <Icon name="arrow-right" size={17} />
+      </Button>
+
+      <p class="text-caption text-muted">
+        {
+          mode === 'endpoint'
+            ? site.consultation.responseNote
+            : mode === 'email'
+              ? 'Your details will be placed into an email for you to review and send.'
+              : 'Online submission is not configured yet — please use the contact details on this page.'
+        }
+      </p>
+    </div>
+
+    <!-- Result region. Never populated with a success message unless a
+         configured endpoint has actually accepted the submission. -->
+    <div class="mt-8" data-result role="status" aria-live="polite" hidden></div>
+  </form>
+</div>
+
+<style>
+  .consult-form {
+    max-width: 44rem;
+  }
+
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  .field-file {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 3.5rem;
+    padding: 1rem 1.25rem;
+    border: 1px dashed var(--color-stone-300);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 220ms var(--ease-out-soft);
+  }
+
+  .field-file:hover {
+    border-color: var(--color-ink-700);
+  }
+
+  .field-file__label {
+    display: block;
+    font-size: 0.9375rem;
+    color: var(--color-ink-800);
+  }
+
+  .field-file__hint {
+    display: block;
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  .field-file:focus-within {
+    outline: 2px solid var(--color-bronze-600);
+    outline-offset: 3px;
+  }
+
+  /* --- Result --------------------------------------------------------------- */
+  :global(.result) {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.5rem 1.75rem;
+    border-left: 2px solid var(--color-bronze-500);
+    background-color: var(--color-stone-50);
+  }
+
+  :global(.result--error) {
+    border-left-color: #a4322c;
+    background-color: #fdf7f6;
+  }
+
+  :global(.result__title) {
+    font-family: var(--font-display);
+    font-size: var(--text-h4);
+    color: var(--color-ink-800);
+  }
+
+  :global(.result__body) {
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--color-body);
+    max-width: 58ch;
+  }
+
+  :global(.result__action) {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 1.5rem;
+    margin-top: 0.25rem;
+    background-color: var(--color-ink-800);
+    color: var(--color-paper);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+  }
+
+  :global(.result__action:hover) {
+    background-color: var(--color-ink-700);
+  }
+</style>
+
+<script>
+  import {
+    submitConsultation,
+    validateInquiry,
+    getDeliveryMode,
+    type ConsultationInquiry,
+    type ConsultationTransport,
+  } from '../services/consultation';
+
+  const form = document.querySelector<HTMLFormElement>('[data-consultation-form]');
+
+  if (form) {
+    const transport: ConsultationTransport = {
+      endpoint: form.dataset.endpoint || '',
+      email: form.dataset.email || null,
+      subjectPrefix: form.dataset.subjectPrefix || '',
+    };
+
+    const result = form.querySelector<HTMLElement>('[data-result]')!;
+    const submitButton = form.querySelector<HTMLButtonElement>('[data-submit]')!;
+    const submitLabel = form.querySelector<HTMLElement>('[data-submit-label]')!;
+    const originalLabel = submitLabel.textContent ?? 'Send Inquiry';
+
+    // --- Character counter ------------------------------------------------
+    const message = form.querySelector<HTMLTextAreaElement>('#message');
+    const counter = form.querySelector<HTMLElement>('[data-counter]');
+    const updateCounter = () => {
+      if (!message || !counter) return;
+      const used = message.value.length;
+      counter.textContent = used > 0 ? `${used} of 3,000 characters` : '';
+    };
+    message?.addEventListener('input', updateCounter);
+
+    // --- Attachment name --------------------------------------------------
+    const file = form.querySelector<HTMLInputElement>('#attachment');
+    const fileName = form.querySelector<HTMLElement>('[data-file-name]');
+    file?.addEventListener('change', () => {
+      if (fileName) fileName.textContent = file.files?.[0]?.name ?? '';
+    });
+
+    // --- Errors -----------------------------------------------------------
+    const fieldFor = (name: string) => form.querySelector<HTMLElement>(`[data-field="${name}"]`);
+
+    const clearError = (name: string) => {
+      const field = fieldFor(name);
+      if (!field) return;
+      field.removeAttribute('data-invalid');
+      const error = field.querySelector<HTMLElement>('[data-error]');
+      if (error) {
+        error.hidden = true;
+        error.textContent = '';
+      }
+      field.querySelectorAll<HTMLElement>('[data-input]').forEach((el) => el.removeAttribute('aria-invalid'));
+    };
+
+    const showError = (name: string, text: string) => {
+      const field = fieldFor(name);
+      if (!field) return;
+      field.setAttribute('data-invalid', 'true');
+      const error = field.querySelector<HTMLElement>('[data-error]');
+      if (error) {
+        error.textContent = text;
+        error.hidden = false;
+      }
+      field.querySelectorAll<HTMLElement>('[data-input]').forEach((el) => el.setAttribute('aria-invalid', 'true'));
+    };
+
+    form.querySelectorAll<HTMLElement>('[data-input]').forEach((input) => {
+      const name = input.closest<HTMLElement>('[data-field]')?.dataset.field;
+      if (name) input.addEventListener('input', () => clearError(name));
+      if (name) input.addEventListener('change', () => clearError(name));
+    });
+
+    // --- Result rendering --------------------------------------------------
+    const renderResult = (title: string, body: string, opts?: { error?: boolean; action?: { href: string; label: string } }) => {
+      result.hidden = false;
+      result.className = `mt-8 result${opts?.error ? ' result--error' : ''}`;
+      result.replaceChildren();
+
+      const h = document.createElement('p');
+      h.className = 'result__title';
+      h.textContent = title;
+
+      const p = document.createElement('p');
+      p.className = 'result__body';
+      p.textContent = body;
+
+      result.append(h, p);
+
+      if (opts?.action) {
+        const a = document.createElement('a');
+        a.className = 'result__action';
+        a.href = opts.action.href;
+        a.textContent = opts.action.label;
+        result.append(a);
+      }
+
+      result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    // --- Submit -------------------------------------------------------------
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const data = new FormData(form);
+      const inquiry: ConsultationInquiry = {
+        fullName: String(data.get('fullName') ?? ''),
+        email: String(data.get('email') ?? ''),
+        phone: String(data.get('phone') ?? ''),
+        preferredContact: String(data.get('preferredContact') ?? 'Email'),
+        practiceArea: String(data.get('practiceArea') ?? ''),
+        preferredTime: String(data.get('preferredTime') ?? ''),
+        message: String(data.get('message') ?? ''),
+        consent: data.get('consent') === 'on',
+        company: String(data.get('company') ?? ''),
+      };
+
+      ['fullName', 'email', 'phone', 'practiceArea', 'message', 'consent'].forEach(clearError);
+
+      const errors = validateInquiry(inquiry);
+      const names = Object.keys(errors);
+
+      if (names.length > 0) {
+        names.forEach((name) => showError(name, errors[name]!));
+        const firstField = fieldFor(names[0]!);
+        firstField?.querySelector<HTMLElement>('[data-input]')?.focus();
+        renderResult(
+          'A few details still need attention',
+          `Please review the ${names.length === 1 ? 'highlighted field' : `${names.length} highlighted fields`} above and try again.`,
+          { error: true },
+        );
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitLabel.textContent = 'Sending…';
+
+      const outcome = await submitConsultation(inquiry, transport);
+
+      submitButton.disabled = false;
+      submitLabel.textContent = originalLabel;
+
+      switch (outcome.status) {
+        case 'submitted':
+          renderResult('Inquiry received', outcome.message);
+          form.reset();
+          updateCounter();
+          break;
+
+        case 'handoff':
+          renderResult('Your email is ready — it has not been sent yet', outcome.message, {
+            action: { href: outcome.mailtoUrl, label: 'Open email application' },
+          });
+          // Attempt to open the mail client; the button remains if it is blocked.
+          window.location.href = outcome.mailtoUrl;
+          break;
+
+        case 'unavailable':
+          renderResult('Online submission is not available', outcome.message, { error: true });
+          break;
+
+        case 'error':
+          renderResult('The inquiry could not be sent', outcome.message, { error: true });
+          break;
+      }
+    });
+
+    // Keeps the label honest if the config changes between builds.
+    if (getDeliveryMode(transport) === 'email' && submitLabel.textContent === 'Send Inquiry') {
+      submitLabel.textContent = 'Compose Inquiry Email';
+    }
+  }
+</script>

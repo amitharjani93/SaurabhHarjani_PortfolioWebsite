@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import FAQAccordion from '../components/FAQAccordion.astro';
+import ConsultationCTA from '../components/ConsultationCTA.astro';
+import LegalDisclaimer from '../components/LegalDisclaimer.astro';
+import { faqs, faqsFor } from '../config/faq';
+import { url } from '../lib/url';
+
+const general = faqsFor('general');
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+
+const groups = [
+  { key: 'general', title: 'The process', items: general },
+  ...areas.map((area) => ({
+    key: area.data.faqKey,
+    title: area.data.title,
+    items: faqsFor(area.data.faqKey),
+    href: `/practice-areas/${area.id}`,
+  })),
+].filter((g) => g.items.length > 0);
+
+const schema = [
+  {
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer.join(' ') },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  title="Frequently Asked Questions"
+  description="How a consultation works, what to prepare, whether an inquiry creates an advocate-client relationship, and common questions about trade mark, property and civil matters."
+  path="/faq"
+  schema={schema}
+>
+  <PageHeader
+    eyebrow="Questions"
+    title="Frequently asked questions."
+    lede="These answers deal with process — how matters are handled and what to expect. They are not advice on any particular situation."
+    crumbs={[{ label: 'FAQ' }]}
+  />
+
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-16 lg:grid-cols-12">
+        <!-- In-page index, sticky on desktop. -->
+        <nav aria-label="Question groups" class="lg:col-span-3 lg:sticky lg:top-28 lg:self-start">
+          <h2 class="text-micro font-medium tracking-[0.18em] uppercase text-bronze-700">Sections</h2>
+          <ul class="mt-5 border-t border-stone-200">
+            {
+              groups.map((group) => (
+                <li>
+                  <a href={`#${group.key}`} class="faq-index__link">
+                    {group.title}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+
+        <div class="lg:col-span-8 lg:col-start-5">
+          <div class="grid gap-16">
+            {
+              groups.map((group) => (
+                <section id={group.key} class="scroll-mt-28">
+                  <div class="flex flex-wrap items-baseline justify-between gap-4">
+                    <h2 class="text-h3">{group.title}</h2>
+                    {'href' in group && group.href && (
+                      <a href={url(group.href)} class="text-caption tracking-[0.08em] uppercase text-bronze-700 underline underline-offset-4 hover:text-ink-800">
+                        Practice area
+                      </a>
+                    )}
+                  </div>
+                  <FAQAccordion items={group.items} idPrefix={`faq-${group.key}`} class="mt-8" />
+                </section>
+              ))
+            }
+          </div>
+
+          <LegalDisclaimer
+            class="mt-16"
+            text="These answers describe how matters are generally handled. They are not legal advice, and nothing here should be applied to a particular situation without advice on its facts."
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <ConsultationCTA variant="band" heading="Still not sure whether to get in touch?" lede="Describe the matter briefly. If it falls outside the practice, you will be told so." />
+</BaseLayout>
+
+<style>
+  .faq-index__link {
+    display: block;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-stone-200);
+    font-size: var(--text-caption);
+    line-height: 1.5;
+    color: var(--color-muted);
+    transition:
+      color 240ms var(--ease-out-soft),
+      padding-left 280ms var(--ease-out-soft);
+  }
+
+  .faq-index__link:hover {
+    color: var(--color-ink-800);
+    padding-left: 0.3rem;
+  }
+</style>

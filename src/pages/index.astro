@@ -1,0 +1,128 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import PracticeAreaCard from '../components/PracticeAreaCard.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import ProfilePreview from '../components/ProfilePreview.astro';
+import ConsultationCTA from '../components/ConsultationCTA.astro';
+import InsightCard from '../components/InsightCard.astro';
+import Reveal from '../components/Reveal.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../config/site';
+import { url } from '../lib/url';
+
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+
+const insights = (await getCollection('insights', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime())
+  .slice(0, 3);
+---
+
+<BaseLayout
+  title={site.meta.defaultTitle}
+  description={site.meta.defaultDescription}
+  path="/"
+  bareTitle
+>
+  <Hero />
+
+  <!-- ------------------------------------------------------- Introduction -->
+  <section class="border-t border-stone-200 bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-10 lg:grid-cols-12">
+        <div class="lg:col-span-4">
+          <span class="eyebrow">The practice</span>
+        </div>
+
+        <div class="lg:col-span-7 lg:col-start-6">
+          <p class="text-h3 leading-[1.35] font-display text-ink-800 max-w-[26ch]">
+            A small practice, deliberately.
+          </p>
+
+          <div class="mt-8 grid gap-6 text-lead text-body max-w-[58ch]">
+            <p>
+              Most people arrive with a question that is more practical than legal: whether the name
+              can be protected, whether the property is safe to buy, whether the dispute is worth
+              taking further. The answer usually depends on documents that already exist.
+            </p>
+            <p>
+              This practice is organised around reading those documents properly and saying plainly
+              what they show. Work is not delegated, matters are taken on selectively, and where a
+              legal step is not warranted you will be told so.
+            </p>
+          </div>
+
+          <a href={url('/profile')} class="link-rule mt-10">
+            About the practice
+            <Icon name="arrow-right" size={16} />
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------ Practice areas -->
+  <section id="practice-areas" class="bg-paper pb-(--spacing-section)">
+    <div class="shell">
+      <SectionHeader
+        eyebrow="Practice areas"
+        title="Three areas, closely related in practice."
+        lede="Brand ownership, property and contract disputes tend to surface together in the life of a business or a family. Each is set out in detail on its own page."
+        titleClass="max-w-[20ch]"
+      />
+
+      <div class="mt-14 lg:mt-20">
+        {
+          areas.map((area, i) => (
+            <Reveal delay={i * 80}>
+              <PracticeAreaCard area={area} variant={i === 0 ? 'feature' : 'row'} />
+            </Reveal>
+          ))
+        }
+      </div>
+
+      <a href={url('/practice-areas')} class="link-rule mt-12">
+        All practice areas
+        <Icon name="arrow-right" size={16} />
+      </a>
+    </div>
+  </section>
+
+  <ProcessSteps />
+
+  <ProfilePreview />
+
+  <ConsultationCTA />
+
+  <!-- ------------------------------------------------------------ Insights -->
+  {
+    insights.length > 0 && (
+      <section class="border-t border-stone-200 bg-paper py-(--spacing-section)">
+        <div class="shell">
+          <div class="flex flex-wrap items-end justify-between gap-8">
+            <SectionHeader
+              eyebrow="Insights"
+              title="Notes on questions that come up often."
+              titleClass="max-w-[18ch]"
+              class="max-w-2xl"
+            />
+            <a href={url('/insights')} class="link-rule">
+              All insights
+              <Icon name="arrow-right" size={16} />
+            </a>
+          </div>
+
+          <div class="mt-12 grid gap-x-12 lg:mt-16 lg:grid-cols-3">
+            {insights.map((entry, i) => (
+              <Reveal delay={i * 80}>
+                <InsightCard entry={entry} />
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>

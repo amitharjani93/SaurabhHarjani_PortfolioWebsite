@@ -1,0 +1,198 @@
+---
+import { getCollection } from 'astro:content';
+import Button from './Button.astro';
+import Icon from './Icon.astro';
+import { site } from '../config/site';
+import { url } from '../lib/url';
+
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<section class="hero relative isolate overflow-hidden">
+  <div class="hero__grid" aria-hidden="true"></div>
+  <div class="hero__wash" aria-hidden="true"></div>
+
+  <div class="shell relative">
+    <div class="grid items-end gap-x-12 gap-y-14 pt-14 pb-(--spacing-section-sm) lg:grid-cols-12 lg:pt-24 xl:pt-28">
+      <!-- ------------------------------------------------------ Statement -->
+      <div class="lg:col-span-7 xl:col-span-7">
+        <p class="eyebrow hero__eyebrow">{site.title} · India</p>
+
+        <h1 class="hero__title optical-left mt-8">
+          Clarity in matters<br class="hidden sm:inline" />
+          <span class="hero__title-em"> that rarely feel clear.</span>
+        </h1>
+
+        <p class="hero__lede mt-8">
+          An independent practice advising on trade marks and intellectual property, on property and
+          title, and on civil disputes. Matters are assessed carefully, explained plainly, and handled
+          by the same person from beginning to end.
+        </p>
+
+        <div class="mt-11 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <Button href="/contact" variant="primary" size="lg">
+            Request a Consultation
+            <Icon name="arrow-right" size={17} />
+          </Button>
+          <Button href="/practice-areas" variant="secondary" size="lg">Explore Practice Areas</Button>
+        </div>
+      </div>
+
+      <!-- --------------------------------------------------- Practice index -->
+      <div class="lg:col-span-4 lg:col-start-9">
+        <div class="hero__index">
+          <p class="hero__index-label">Areas of practice</p>
+
+          <ul>
+            {
+              areas.map((area) => (
+                <li>
+                  <a href={url(`/practice-areas/${area.id}`)} class="hero__index-item">
+                    <span class="hero__index-numeral nums-tabular" aria-hidden="true">
+                      {area.data.numeral}
+                    </span>
+                    <span class="hero__index-title">{area.data.shortTitle}</span>
+                    <Icon name="arrow-right" size={16} class="hero__index-arrow" />
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+
+          <p class="hero__index-note">{site.consultation.responseNote}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    background-color: var(--color-paper);
+  }
+
+  /* Vertical hairlines on the same 4-column rhythm as the page grid. */
+  .hero__grid {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to right, var(--color-stone-200) 1px, transparent 1px);
+    background-size: 25% 100%;
+    opacity: 0.55;
+    mask-image: linear-gradient(to bottom, transparent, black 30%, black 82%, transparent);
+  }
+
+  /* A single warm wash anchored to the upper right, in place of an image. */
+  .hero__wash {
+    position: absolute;
+    top: -30%;
+    right: -18%;
+    width: 62vw;
+    max-width: 46rem;
+    aspect-ratio: 1;
+    background: radial-gradient(
+      circle at 50% 50%,
+      color-mix(in srgb, var(--color-bronze-500) 13%, transparent),
+      transparent 62%
+    );
+    pointer-events: none;
+  }
+
+  .hero__eyebrow {
+    letter-spacing: 0.2em;
+  }
+
+  .hero__title {
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    color: var(--color-ink-800);
+    max-width: 15ch;
+  }
+
+  .hero__title-em {
+    font-style: italic;
+    color: var(--color-ink-700);
+  }
+
+  .hero__lede {
+    max-width: 48ch;
+    font-size: var(--text-lead);
+    line-height: 1.72;
+    color: var(--color-body);
+  }
+
+  /* --- Index --------------------------------------------------------------- */
+  .hero__index {
+    border-top: 1px solid var(--color-ink-800);
+    padding-top: 1.25rem;
+  }
+
+  .hero__index-label {
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .hero__index ul {
+    margin-top: 0.75rem;
+  }
+
+  .hero__index-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: 1rem;
+    min-height: 3.5rem;
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--color-stone-200);
+    transition:
+      border-color 300ms var(--ease-out-soft),
+      color 300ms var(--ease-out-soft);
+  }
+
+  .hero__index-item:hover {
+    border-color: var(--color-bronze-500);
+  }
+
+  .hero__index-numeral {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    color: var(--color-bronze-600);
+  }
+
+  .hero__index-title {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    color: var(--color-ink-800);
+  }
+
+  .hero__index-arrow {
+    align-self: center;
+    color: var(--color-stone-400);
+    transition:
+      transform 320ms var(--ease-out-soft),
+      color 320ms var(--ease-out-soft);
+  }
+
+  .hero__index-item:hover .hero__index-arrow,
+  .hero__index-item:focus-visible .hero__index-arrow {
+    transform: translateX(4px);
+    color: var(--color-bronze-600);
+  }
+
+  .hero__index-note {
+    margin-top: 1.5rem;
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    max-width: 34ch;
+  }
+
+  @media (max-width: 1023px) {
+    .hero__index {
+      max-width: 32rem;
+    }
+  }
+</style>

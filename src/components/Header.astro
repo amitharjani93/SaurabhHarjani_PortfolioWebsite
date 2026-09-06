@@ -1,0 +1,486 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { primaryNav, primaryCta, utilityNav } from '../config/navigation';
+import { site, hasContactDetails, formattedAddress } from '../config/site';
+import { url, isActive } from '../lib/url';
+
+const pathname = Astro.url.pathname;
+const address = formattedAddress();
+---
+
+<a
+  href="#main"
+  class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-ink-800 focus:px-5 focus:py-3 focus:text-[0.8125rem] focus:tracking-[0.06em] focus:text-paper focus:uppercase"
+>
+  Skip to content
+</a>
+
+<!-- Sentinel: drives the header's scrolled state without a scroll listener. -->
+<div data-header-sentinel aria-hidden="true" class="absolute top-0 h-px w-full"></div>
+
+<header data-site-header class="site-header">
+  <div class="shell">
+    <div class="flex items-center justify-between gap-6 py-4 lg:py-5">
+      <a href={url('/')} class="site-header__brand" aria-label={`${site.name}, home`}>
+        <Logo variant="inline" size="md" />
+      </a>
+
+      <nav class="hidden lg:block" aria-label="Primary">
+        <ul class="flex items-center gap-1">
+          {
+            primaryNav.map((item) => {
+              const active = isActive(item.href, pathname, item.matchPrefix);
+              return (
+                <li>
+                  <a
+                    href={url(item.href)}
+                    class="nav-link"
+                    aria-current={active ? 'page' : undefined}
+                    data-active={active ? 'true' : undefined}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <a href={url(primaryCta.href)} class="header-cta">
+          {primaryCta.label}
+        </a>
+
+        <button
+          type="button"
+          data-nav-toggle
+          class="nav-toggle"
+          aria-expanded="false"
+          aria-controls="mobile-navigation"
+        >
+          <span class="sr-only">Open menu</span>
+          <Icon name="menu" size={22} />
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ---------------------------------------------------------------- Drawer -->
+<div data-nav-panel id="mobile-navigation" class="nav-panel" hidden>
+  <div data-nav-backdrop class="nav-panel__backdrop"></div>
+
+  <div class="nav-panel__sheet" role="dialog" aria-modal="true" aria-label="Site menu">
+    <div class="flex items-center justify-between gap-4 px-(--spacing-gutter) py-4">
+      <Logo variant="inline" size="sm" tone="inverse" />
+      <button type="button" data-nav-close class="nav-toggle">
+        <span class="sr-only">Close menu</span>
+        <Icon name="close" size={20} />
+      </button>
+    </div>
+
+    <div class="nav-panel__scroll">
+      <nav aria-label="Primary, mobile">
+        <ul class="nav-panel__list">
+          {
+            primaryNav.map((item, i) => {
+              const active = isActive(item.href, pathname, item.matchPrefix);
+              return (
+                <li>
+                  <a
+                    href={url(item.href)}
+                    class="nav-panel__link"
+                    aria-current={active ? 'page' : undefined}
+                    data-active={active ? 'true' : undefined}
+                    style={`--i:${i}`}
+                  >
+                    <span class="nav-panel__index">{String(i + 1).padStart(2, '0')}</span>
+                    <span>{item.label}</span>
+                  </a>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </nav>
+
+      <div class="nav-panel__footer">
+        <a href={url(primaryCta.href)} class="nav-panel__cta">
+          {primaryCta.label}
+          <Icon name="arrow-right" size={17} />
+        </a>
+
+        {
+          hasContactDetails && (
+            <address class="not-italic grid text-caption text-paper/65">
+              {site.contact.phone && (
+                <a href={`tel:${site.contact.phone.replace(/\s/g, '')}`} class="inline-flex min-h-11 items-center hover:text-paper">
+                  {site.contact.phone}
+                </a>
+              )}
+              {site.contact.email && (
+                <a href={`mailto:${site.contact.email}`} class="inline-flex min-h-11 items-center hover:text-paper">
+                  {site.contact.email}
+                </a>
+              )}
+              {address.length > 0 && <span class="py-2">{address.join(', ')}</span>}
+            </address>
+          )
+        }
+
+        <ul class="flex flex-wrap gap-x-5 text-caption text-paper/55">
+          {
+            utilityNav.map((item) => (
+              <li>
+                <a href={url(item.href)} class="inline-flex min-h-11 items-center hover:text-paper">
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    background-color: color-mix(in srgb, var(--color-paper) 82%, transparent);
+    backdrop-filter: saturate(150%) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition:
+      background-color 350ms var(--ease-out-soft),
+      border-color 350ms var(--ease-out-soft),
+      box-shadow 350ms var(--ease-out-soft);
+  }
+
+  .site-header[data-scrolled='true'] {
+    background-color: color-mix(in srgb, var(--color-paper) 94%, transparent);
+    border-bottom-color: var(--color-stone-200);
+    box-shadow: 0 12px 28px -26px rgb(22 33 58 / 0.5);
+  }
+
+  .site-header__brand {
+    display: inline-flex;
+    padding-block: 0.35rem;
+    transition: opacity 250ms var(--ease-out-soft);
+  }
+
+  .site-header__brand:hover {
+    opacity: 0.75;
+  }
+
+  /* --- Desktop links ------------------------------------------------------ */
+  .nav-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 0.9rem;
+    font-size: 0.8125rem;
+    font-weight: 450;
+    letter-spacing: 0.02em;
+    color: var(--color-ink-700);
+    transition: color 220ms var(--ease-out-soft);
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0.9rem;
+    right: 0.9rem;
+    bottom: 0.55rem;
+    height: 1px;
+    background-color: var(--color-bronze-500);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 320ms var(--ease-out-soft);
+  }
+
+  .nav-link:hover,
+  .nav-link[data-active='true'] {
+    color: var(--color-ink-900);
+  }
+
+  .nav-link:hover::after,
+  .nav-link:focus-visible::after,
+  .nav-link[data-active='true']::after {
+    transform: scaleX(1);
+  }
+
+  /* --- Header CTA --------------------------------------------------------- */
+  .header-cta {
+    display: none;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 1.35rem;
+    margin-left: 0.75rem;
+    border: 1px solid var(--color-ink-800);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-ink-800);
+    color: var(--color-paper);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition:
+      background-color 260ms var(--ease-out-soft),
+      border-color 260ms var(--ease-out-soft);
+  }
+
+  .header-cta:hover {
+    background-color: var(--color-ink-700);
+    border-color: var(--color-ink-700);
+  }
+
+  /* Desktop threshold. Declared here rather than with Tailwind's `lg:hidden`,
+     because a scoped component rule outranks a single-class utility. */
+  @media (min-width: 1024px) {
+    .header-cta {
+      display: inline-flex;
+    }
+
+    .nav-toggle[data-nav-toggle] {
+      display: none;
+    }
+  }
+
+  /* --- Toggle ------------------------------------------------------------- */
+  .nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-right: -0.5rem;
+    border-radius: var(--radius-sm);
+    color: currentColor;
+    transition: background-color 200ms var(--ease-out-soft);
+  }
+
+  .nav-toggle:hover {
+    background-color: color-mix(in srgb, currentColor 8%, transparent);
+  }
+
+  /* --- Drawer -------------------------------------------------------------- */
+  .nav-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+  }
+
+  .nav-panel[hidden] {
+    display: none;
+  }
+
+  .nav-panel__backdrop {
+    position: absolute;
+    inset: 0;
+    background-color: rgb(8 13 23 / 0.45);
+    opacity: 0;
+    transition: opacity 320ms var(--ease-out-soft);
+  }
+
+  .nav-panel__sheet {
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    width: min(26rem, 100%);
+    background-color: var(--color-ink-900);
+    color: var(--color-paper);
+    transform: translateX(100%);
+    transition: transform 420ms var(--ease-out-soft);
+    box-shadow: -30px 0 60px -40px rgb(0 0 0 / 0.8);
+  }
+
+  .nav-panel[data-open='true'] .nav-panel__backdrop {
+    opacity: 1;
+  }
+
+  .nav-panel[data-open='true'] .nav-panel__sheet {
+    transform: none;
+  }
+
+  .nav-panel__scroll {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 3rem;
+    padding: 1.5rem var(--spacing-gutter) calc(2rem + env(safe-area-inset-bottom));
+  }
+
+  .nav-panel__list {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid rgb(255 255 255 / 0.09);
+  }
+
+  .nav-panel__link {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    min-height: 3.5rem;
+    padding-block: 0.9rem;
+    border-bottom: 1px solid rgb(255 255 255 / 0.09);
+    font-family: var(--font-display);
+    font-size: 1.375rem;
+    color: color-mix(in srgb, var(--color-paper) 88%, transparent);
+    transition:
+      color 220ms var(--ease-out-soft),
+      padding-left 320ms var(--ease-out-soft);
+  }
+
+  .nav-panel__link:hover,
+  .nav-panel__link[data-active='true'] {
+    color: var(--color-paper);
+    padding-left: 0.4rem;
+  }
+
+  .nav-panel__index {
+    font-family: var(--font-sans);
+    font-size: 0.625rem;
+    letter-spacing: 0.18em;
+    color: var(--color-bronze-400);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .nav-panel__link[data-active='true'] .nav-panel__index {
+    color: var(--color-bronze-300);
+  }
+
+  .nav-panel__footer {
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  .nav-panel__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 3.25rem;
+    padding-inline: 1.5rem;
+    background-color: var(--color-paper);
+    color: var(--color-ink-800);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: background-color 240ms var(--ease-out-soft);
+  }
+
+  .nav-panel__cta:hover {
+    background-color: var(--color-bronze-200);
+  }
+
+  /* Staggered entry for the drawer links. */
+  @media (prefers-reduced-motion: no-preference) {
+    .nav-panel[data-open='true'] .nav-panel__link {
+      animation: nav-item-in 460ms var(--ease-out-soft) backwards;
+      animation-delay: calc(120ms + var(--i) * 55ms);
+    }
+
+    @keyframes nav-item-in {
+      from {
+        opacity: 0;
+        transform: translateX(18px);
+      }
+    }
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-site-header]');
+  const sentinel = document.querySelector('[data-header-sentinel]');
+
+  if (header && sentinel && 'IntersectionObserver' in window) {
+    new IntersectionObserver(
+      ([entry]) => {
+        header.dataset.scrolled = entry && entry.isIntersecting ? 'false' : 'true';
+      },
+      { threshold: 0 },
+    ).observe(sentinel);
+  }
+
+  const panel = document.querySelector<HTMLElement>('[data-nav-panel]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+  const closers = document.querySelectorAll<HTMLElement>('[data-nav-close],[data-nav-backdrop]');
+
+  if (panel && toggle) {
+    const focusables = () =>
+      Array.from(panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')).filter(
+        (el) => el.offsetParent !== null,
+      );
+
+    const open = () => {
+      panel.hidden = false;
+      // Force a frame so the transition runs from the closed state.
+      requestAnimationFrame(() => {
+        panel.dataset.open = 'true';
+        focusables()[0]?.focus();
+      });
+      toggle.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    };
+
+    const close = () => {
+      panel.dataset.open = 'false';
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+      toggle.focus();
+      const done = () => {
+        if (panel.dataset.open !== 'true') panel.hidden = true;
+      };
+      const sheet = panel.querySelector<HTMLElement>('.nav-panel__sheet');
+      if (sheet) sheet.addEventListener('transitionend', done, { once: true });
+      else done();
+      window.setTimeout(done, 600);
+    };
+
+    toggle.addEventListener('click', open);
+    closers.forEach((el) => el.addEventListener('click', close));
+
+    document.addEventListener('keydown', (event) => {
+      if (panel.dataset.open !== 'true') return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+        return;
+      }
+
+      if (event.key === 'Tab') {
+        const items = focusables();
+        if (items.length === 0) return;
+        const first = items[0]!;
+        const last = items[items.length - 1]!;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    // Close if the viewport grows past the breakpoint while the drawer is open.
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    desktop.addEventListener('change', (e) => {
+      if (e.matches && panel.dataset.open === 'true') close();
+    });
+  }
+</script>

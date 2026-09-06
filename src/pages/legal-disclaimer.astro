@@ -1,0 +1,118 @@
+---
+/**
+ * ⚖️ REVIEW REQUIRED
+ * ---------------------------------------------------------------------------
+ * The wording below is a starting draft written for an independent advocate
+ * practising in India. It must be read, corrected and approved by the advocate
+ * — and where necessary checked against the applicable Bar Council rules —
+ * before this site is published. Do not treat it as settled legal text.
+ * ---------------------------------------------------------------------------
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { site } from '../config/site';
+import { url } from '../lib/url';
+
+const updated = 'Not yet published';
+---
+
+<BaseLayout
+  title="Legal Disclaimer"
+  description="Terms on which the information on this website is provided, and the limits of what it can be relied upon for."
+  path="/legal-disclaimer"
+  noindex={false}
+>
+  <PageHeader
+    eyebrow="Legal"
+    title="Legal disclaimer."
+    lede="The basis on which the information on this website is made available."
+    crumbs={[{ label: 'Legal Disclaimer' }]}
+  />
+
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-10 lg:grid-cols-12">
+        <div class="lg:col-span-3">
+          <p class="text-micro tracking-[0.18em] uppercase text-muted">Last updated</p>
+          <p class="mt-2 font-display text-ink-800">{updated}</p>
+        </div>
+
+        <div class="prose-legal lg:col-span-8 lg:col-start-5">
+          <p class="text-lead">
+            This website belongs to {site.name}, an independent advocate. It is published to provide
+            information about the practice and about areas of law in which instructions are accepted.
+          </p>
+
+          <h2>No advertisement or solicitation</h2>
+          <p>
+            The rules of professional conduct applicable to advocates in India restrict advertising
+            and the solicitation of work. This website is not an advertisement, an inducement or a
+            solicitation of any kind. It contains no testimonials, client names, rankings,
+            comparative claims, success rates or fee offers.
+          </p>
+          <p>
+            By using this website you acknowledge that you are seeking information about {site.name}
+            of your own accord, and that no advertisement, personal communication, solicitation,
+            invitation or inducement has been made to you.
+          </p>
+
+          <h2>Not legal advice</h2>
+          <p>
+            The material on this website is general information. It is not legal advice and must not
+            be relied upon as a substitute for advice given on the facts of a particular matter. Law
+            and procedure change, and material on this site may not reflect the current position.
+          </p>
+          <p>
+            No liability is accepted for any action taken, or not taken, on the basis of anything
+            published here.
+          </p>
+
+          <h2>No advocate-client relationship</h2>
+          <p>
+            Reading this website, sending an inquiry through the consultation form, or corresponding
+            about a possible matter does not create an advocate-client relationship. Such a
+            relationship arises only after the matter has been reviewed for conflicts, accepted, and
+            the terms of engagement have been agreed.
+          </p>
+          <p>
+            Until that point, please do not send confidential or privileged material. Information
+            sent before an engagement is agreed may not attract the protection that applies to
+            communications with an advocate.
+          </p>
+
+          <h2>Time-sensitive matters</h2>
+          <p>
+            Legal rights and remedies are frequently subject to limitation periods and other
+            deadlines. This website must not be used to convey anything urgent. If a deadline is
+            approaching, take advice immediately by direct contact.
+          </p>
+
+          <h2>Third-party links</h2>
+          <p>
+            Where this website links to another site, it does so for convenience only. No
+            responsibility is taken for the content, accuracy or availability of external sites.
+          </p>
+
+          <h2>Intellectual property</h2>
+          <p>
+            The text, design and other material on this website are the property of {site.name}
+            unless otherwise stated, and may not be reproduced without permission.
+          </p>
+
+          <h2>Jurisdiction</h2>
+          <p>
+            This website is directed to visitors in India. Nothing on it is intended as advice on the
+            law of any other jurisdiction, and any dispute concerning this website is subject to the
+            laws of India.
+          </p>
+
+          <h2>Questions</h2>
+          <p>
+            If anything on this page is unclear, please raise it through the
+            <a href={url('/contact')}>consultation form</a> before relying on any part of this site.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,65 @@
+---
+import '@fontsource/playfair-display/latin-400.css';
+import '@fontsource/playfair-display/latin-500.css';
+import '@fontsource-variable/inter/wght.css';
+import '../styles/global.css';
+
+import SEO from '../components/SEO.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import EntryDisclaimer from '../components/EntryDisclaimer.astro';
+import { site } from '../config/site';
+import { getAnalyticsScript } from '../services/analytics';
+import { url } from '../lib/url';
+
+interface Props {
+  title: string;
+  description?: string;
+  path: string;
+  type?: 'website' | 'article' | 'profile';
+  bareTitle?: boolean;
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  schema?: Record<string, unknown>[];
+  /** Removes the top padding so a page can run its own full-bleed opening. */
+  class?: string;
+}
+
+const { class: className = '', ...seo } = Astro.props;
+const analytics = getAnalyticsScript();
+---
+
+<!doctype html>
+<html lang="en-IN" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#16213a" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="icon" href={url('/favicon.svg')} type="image/svg+xml" />
+    <link rel="sitemap" href={url('/sitemap-index.xml')} />
+
+    <SEO {...seo} />
+
+    {/* Analytics loads only when a provider is configured. Nothing by default. */}
+    {analytics && <script is:inline src={analytics.src} {...analytics.attributes} />}
+
+    <script is:inline>
+      document.documentElement.classList.remove('no-js');
+    </script>
+  </head>
+
+  <body class="flex min-h-svh flex-col">
+    {site.compliance.entryDisclaimerEnabled && <EntryDisclaimer />}
+
+    <Header />
+
+    <main id="main" class:list={['flex-1', className]}>
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>

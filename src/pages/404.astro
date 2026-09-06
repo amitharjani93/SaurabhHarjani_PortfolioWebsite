@@ -1,0 +1,111 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+import Icon from '../components/Icon.astro';
+import { url } from '../lib/url';
+
+const areas = (await getCollection('practice-areas')).sort((a, b) => a.data.order - b.data.order);
+
+const destinations = [
+  { label: 'Profile', href: '/profile', note: 'Background, philosophy and areas of focus' },
+  ...areas.map((a) => ({ label: a.data.title, href: `/practice-areas/${a.id}`, note: a.data.summary })),
+  { label: 'Insights', href: '/insights', note: 'Notes on questions that come up often' },
+  { label: 'Contact', href: '/contact', note: 'Request a consultation' },
+];
+---
+
+<BaseLayout title="Page not found" description="The page you were looking for does not exist." path="/404" noindex>
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-14 lg:grid-cols-12">
+        <div class="lg:col-span-5">
+          <p class="font-display text-[clamp(4rem,12vw,7rem)] leading-none text-bronze-300 nums-tabular" aria-hidden="true">
+            404
+          </p>
+
+          <h1 class="mt-8 text-h1 max-w-[14ch] optical-left">This page does not exist.</h1>
+
+          <p class="mt-7 max-w-[42ch] text-lead text-body">
+            The address may have changed, or the link that brought you here may be out of date.
+            Everything on the site is listed alongside.
+          </p>
+
+          <div class="mt-10 flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <Button href="/" variant="primary" size="lg">
+              Return home
+              <Icon name="arrow-right" size={17} />
+            </Button>
+            <Button href="/contact" variant="secondary" size="lg">Request a consultation</Button>
+          </div>
+        </div>
+
+        <nav class="lg:col-span-6 lg:col-start-7" aria-label="Site index">
+          <h2 class="text-micro font-medium tracking-[0.18em] uppercase text-bronze-700">Where to next</h2>
+
+          <ul class="mt-6 border-t border-ink-800">
+            {
+              destinations.map((item) => (
+                <li>
+                  <a href={url(item.href)} class="notfound-link">
+                    <span>
+                      <span class="notfound-link__label">{item.label}</span>
+                      <span class="notfound-link__note">{item.note}</span>
+                    </span>
+                    <Icon name="arrow-right" size={16} class="notfound-link__arrow" />
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .notfound-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 4rem;
+    padding-block: 1.15rem;
+    border-bottom: 1px solid var(--color-stone-200);
+    transition: border-color 300ms var(--ease-out-soft);
+  }
+
+  .notfound-link:hover {
+    border-bottom-color: var(--color-bronze-500);
+  }
+
+  .notfound-link__label {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    color: var(--color-ink-800);
+  }
+
+  .notfound-link__note {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: var(--text-caption);
+    line-height: 1.55;
+    color: var(--color-muted);
+    max-width: 46ch;
+  }
+
+  .notfound-link__arrow {
+    flex: none;
+    color: var(--color-stone-400);
+    transition:
+      transform 300ms var(--ease-out-soft),
+      color 300ms var(--ease-out-soft);
+  }
+
+  .notfound-link:hover .notfound-link__arrow {
+    transform: translateX(4px);
+    color: var(--color-bronze-600);
+  }
+</style>

@@ -1,0 +1,241 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import ConsultationCTA from '../../components/ConsultationCTA.astro';
+import LegalDisclaimer from '../../components/LegalDisclaimer.astro';
+import InsightCard from '../../components/InsightCard.astro';
+import Icon from '../../components/Icon.astro';
+import { site } from '../../config/site';
+import { absoluteUrl, url } from '../../lib/url';
+import { formatDate, isoDate, readingTime } from '../../lib/format';
+
+export async function getStaticPaths() {
+  const entries = await getCollection('insights', ({ data }) => !data.draft);
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+interface Props {
+  entry: CollectionEntry<'insights'>;
+}
+
+const { entry } = Astro.props;
+const { title, description, category, publishDate, updatedDate, relatedPracticeArea, sample } = entry.data;
+
+const { Content, headings } = await render(entry);
+const minutes = readingTime(entry.body ?? '');
+
+const areas = await getCollection('practice-areas');
+const related = relatedPracticeArea ? areas.find((a) => a.id === relatedPracticeArea) : undefined;
+
+const more = (await getCollection('insights', ({ data }) => !data.draft))
+  .filter((e) => e.id !== entry.id)
+  .sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime())
+  .slice(0, 2);
+
+const sections = headings.filter((h) => h.depth === 2);
+
+const schema = [
+  {
+    '@type': 'Article',
+    headline: title,
+    description,
+    datePublished: isoDate(publishDate),
+    ...(updatedDate && { dateModified: isoDate(updatedDate) }),
+    author: { '@id': absoluteUrl('/#person', Astro.site) },
+    publisher: { '@id': absoluteUrl('/#person', Astro.site) },
+    mainEntityOfPage: absoluteUrl(`/insights/${entry.id}`, Astro.site),
+    articleSection: category,
+    inLanguage: 'en-IN',
+  },
+];
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  path={`/insights/${entry.id}`}
+  type="article"
+  publishedTime={publishDate.toISOString()}
+  modifiedTime={updatedDate?.toISOString()}
+  schema={schema}
+>
+  <article>
+    <!-- ---------------------------------------------------------- Header -->
+    <header class="border-b border-stone-200 bg-paper">
+      <div class="shell-narrow">
+        <Breadcrumbs items={[{ label: 'Insights', href: '/insights' }, { label: title }]} class="pt-8" />
+
+        <div class="pt-10 pb-(--spacing-section-sm) lg:pt-14">
+          <div class="flex flex-wrap items-center gap-3 text-micro tracking-[0.14em] uppercase text-muted">
+            <span class="font-medium tracking-[0.18em] text-bronze-700">{category}</span>
+            <span aria-hidden="true" class="text-stone-400">·</span>
+            <time datetime={isoDate(publishDate)}>{formatDate(publishDate)}</time>
+            <span aria-hidden="true" class="text-stone-400">·</span>
+            <span>{minutes} min read</span>
+          </div>
+
+          <h1 class="mt-7 text-h1 max-w-[20ch] optical-left">{title}</h1>
+          <p class="mt-7 max-w-[52ch] text-lead text-body">{description}</p>
+
+          {
+            sample && (
+              <p class="mt-9 border-l-2 border-bronze-500 bg-stone-50 px-5 py-4 text-caption text-body max-w-[62ch]">
+                <strong class="text-ink-800">Sample article.</strong> This piece is placeholder content
+                written to demonstrate the format of this section. It is not published commentary and
+                should not be relied upon. Replace or remove the file at
+                <code class="font-sans text-ink-700">src/content/insights/{entry.id}.mdx</code>.
+              </p>
+            )
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- ------------------------------------------------------------- Body -->
+    <div class="bg-paper py-(--spacing-section-sm)">
+      <div class="shell">
+        <div class="grid gap-x-14 gap-y-12 lg:grid-cols-12">
+          {
+            sections.length > 2 && (
+              <nav aria-label="On this page" class="lg:col-span-3 lg:sticky lg:top-28 lg:self-start">
+                <h2 class="text-micro font-medium tracking-[0.18em] uppercase text-bronze-700">On this page</h2>
+                <ul class="mt-5 grid gap-0 border-t border-stone-200">
+                  {sections.map((heading) => (
+                    <li>
+                      <a href={`#${heading.slug}`} class="toc-link">
+                        {heading.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )
+          }
+
+          <div class:list={['prose-legal', sections.length > 2 ? 'lg:col-span-8 lg:col-start-5' : 'lg:col-span-8 lg:col-start-3']}>
+            <Content />
+
+            <hr />
+
+            <LegalDisclaimer text="This article is general information about the law and procedure. It is not advice on any particular matter, the law may have changed since publication, and it should not be relied upon in place of advice on your own facts." />
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- ---------------------------------------------------------- Related -->
+  {
+    (related || more.length > 0) && (
+      <section class="border-t border-stone-200 bg-paper py-(--spacing-section-sm)">
+        <div class="shell">
+          {related && (
+            <a href={url(`/practice-areas/${related.id}`)} class="related-area">
+              <span>
+                <span class="related-area__label">Related practice area</span>
+                <span class="related-area__title">{related.data.title}</span>
+                <span class="related-area__summary">{related.data.summary}</span>
+              </span>
+              <Icon name="arrow-right" size={18} class="related-area__arrow" />
+            </a>
+          )}
+
+          {more.length > 0 && (
+            <div class="mt-16">
+              <span class="eyebrow">More insights</span>
+              <div class="mt-8 grid gap-x-12 md:grid-cols-2">
+                {more.map((item) => (
+                  <InsightCard entry={item} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  <ConsultationCTA
+    variant="band"
+    heading="Dealing with something similar?"
+    lede={`Send a short summary of the matter. ${site.consultation.responseNote}`}
+  />
+</BaseLayout>
+
+<style>
+  .toc-link {
+    display: block;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--color-stone-200);
+    font-size: var(--text-caption);
+    line-height: 1.5;
+    color: var(--color-muted);
+    transition:
+      color 240ms var(--ease-out-soft),
+      padding-left 280ms var(--ease-out-soft);
+  }
+
+  .toc-link:hover {
+    color: var(--color-ink-800);
+    padding-left: 0.3rem;
+  }
+
+  .related-area {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--color-ink-800);
+    border-bottom: 1px solid var(--color-stone-200);
+    transition: border-bottom-color 320ms var(--ease-out-soft);
+  }
+
+  .related-area:hover {
+    border-bottom-color: var(--color-bronze-500);
+  }
+
+  .related-area__label {
+    display: block;
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-bronze-700);
+  }
+
+  .related-area__title {
+    display: block;
+    margin-top: 0.75rem;
+    font-family: var(--font-display);
+    font-size: var(--text-h3);
+    color: var(--color-ink-800);
+  }
+
+  .related-area__summary {
+    display: block;
+    margin-top: 0.6rem;
+    max-width: 56ch;
+    color: var(--color-body);
+  }
+
+  .related-area__arrow {
+    flex: none;
+    color: var(--color-stone-400);
+    transition:
+      transform 320ms var(--ease-out-soft),
+      color 320ms var(--ease-out-soft);
+  }
+
+  .related-area:hover .related-area__arrow {
+    transform: translateX(5px);
+    color: var(--color-bronze-600);
+  }
+
+  /* Headings in the article body get a scroll offset clear of the sticky header. */
+  .prose-legal :global(h2),
+  .prose-legal :global(h3) {
+    scroll-margin-top: 7rem;
+  }
+</style>

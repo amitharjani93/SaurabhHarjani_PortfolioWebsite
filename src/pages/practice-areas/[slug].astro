@@ -1,0 +1,332 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import FAQAccordion from '../../components/FAQAccordion.astro';
+import PracticeAreaNavigation from '../../components/PracticeAreaNavigation.astro';
+import ConsultationCTA from '../../components/ConsultationCTA.astro';
+import LegalDisclaimer from '../../components/LegalDisclaimer.astro';
+import InsightCard from '../../components/InsightCard.astro';
+import Reveal from '../../components/Reveal.astro';
+import Icon from '../../components/Icon.astro';
+import { faqsFor } from '../../config/faq';
+import { site } from '../../config/site';
+import { absoluteUrl, url } from '../../lib/url';
+
+export async function getStaticPaths() {
+  const areas = await getCollection('practice-areas');
+  return areas.map((area) => ({ params: { slug: area.id }, props: { area } }));
+}
+
+interface Props {
+  area: CollectionEntry<'practice-areas'>;
+}
+
+const { area } = Astro.props;
+const { title, shortTitle, summary, statement, numeral, services, situations, process, faqKey, seoTitle, seoDescription } =
+  area.data;
+
+const { Content } = await render(area);
+const faqs = faqsFor(faqKey);
+
+const related = (await getCollection('insights', ({ data }) => !data.draft && data.relatedPracticeArea === area.id))
+  .sort((a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime())
+  .slice(0, 2);
+
+const schema: Record<string, unknown>[] = [
+  {
+    '@type': 'Service',
+    name: title,
+    description: summary,
+    url: absoluteUrl(`/practice-areas/${area.id}`, Astro.site),
+    provider: { '@id': absoluteUrl('/#person', Astro.site) },
+    serviceType: title,
+    ...(services.length > 0 && {
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: `${title} — service categories`,
+        itemListElement: services.map((s) => ({
+          '@type': 'Offer',
+          itemOffered: { '@type': 'Service', name: s.title, description: s.description },
+        })),
+      },
+    }),
+  },
+];
+
+if (faqs.length > 0) {
+  schema.push({
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer.join(' ') },
+    })),
+  });
+}
+---
+
+<BaseLayout
+  title={seoTitle ?? title}
+  description={seoDescription ?? summary}
+  path={`/practice-areas/${area.id}`}
+  schema={schema}
+>
+  <PageHeader
+    eyebrow={shortTitle}
+    numeral={numeral}
+    title={title}
+    lede={summary}
+    statement={statement}
+    crumbs={[{ label: 'Practice Areas', href: '/practice-areas' }, { label: shortTitle }]}
+  />
+
+  <!-- ------------------------------------------------------- Introduction -->
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      <div class="grid gap-x-16 gap-y-10 lg:grid-cols-12">
+        <div class="lg:col-span-4">
+          <span class="eyebrow">Overview</span>
+        </div>
+        <div class="prose-legal lg:col-span-7 lg:col-start-6 text-lead">
+          <Content />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ----------------------------------------------------------- Services -->
+  {
+    services.length > 0 && (
+      <section class="border-t border-stone-200 bg-stone-50 py-(--spacing-section)">
+        <div class="shell">
+          <div class="grid gap-x-16 gap-y-12 lg:grid-cols-12">
+            <div class="lg:col-span-4">
+              <span class="eyebrow">Service categories</span>
+              <h2 class="mt-6 text-h3 max-w-[16ch]">What this work involves.</h2>
+              <p class="mt-6 max-w-[38ch] text-caption text-muted">
+                {/* ⚖️ Confirm that every category below is offered before publishing. */}
+                Categories are listed to describe the type of work undertaken. Whether a particular
+                matter can be accepted depends on its facts.
+              </p>
+            </div>
+
+            <div class="lg:col-span-7 lg:col-start-6">
+              <dl class="service-grid">
+                {services.map((service, i) => (
+                  <Reveal delay={Math.min(i, 4) * 60} class="service">
+                    <dt class="service__title">{service.title}</dt>
+                    <dd class="service__body">{service.description}</dd>
+                  </Reveal>
+                ))}
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- ---------------------------------------------------------- Situations -->
+  {
+    situations.length > 0 && (
+      <section class="bg-ink-800 py-(--spacing-section) text-paper">
+        <div class="shell">
+          <div class="grid gap-x-16 gap-y-12 lg:grid-cols-12">
+            <div class="lg:col-span-4">
+              <span class="eyebrow eyebrow-inverse">When people get in touch</span>
+              <h2 class="mt-6 text-h2 text-paper max-w-[14ch]">Situations this may cover.</h2>
+              <p class="mt-6 max-w-[36ch] text-paper/65">
+                Not an exhaustive list, and not every situation here needs a lawyer. If one of them
+                describes yours, it is worth a conversation.
+              </p>
+            </div>
+
+            <ul class="lg:col-span-7 lg:col-start-6 grid gap-0">
+              {situations.map((situation) => (
+                <li class="situation">{situation}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- ------------------------------------------------------------ Process -->
+  {
+    process.length > 0 && (
+      <section class="bg-paper py-(--spacing-section)">
+        <div class="shell">
+          <div class="grid gap-x-16 gap-y-12 lg:grid-cols-12">
+            <div class="lg:col-span-4">
+              <span class="eyebrow">How assistance works</span>
+              <h2 class="mt-6 text-h3 max-w-[16ch]">The usual sequence.</h2>
+            </div>
+
+            <ol class="lg:col-span-7 lg:col-start-6">
+              {process.map((step, i) => (
+                <Reveal as="li" delay={i * 70} class="process-row">
+                  <span class="process-row__n nums-tabular" aria-hidden="true">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <h3 class="process-row__title">{step.title}</h3>
+                    <p class="process-row__body">{step.body}</p>
+                  </div>
+                </Reveal>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- ---------------------------------------------------------------- FAQ -->
+  {
+    faqs.length > 0 && (
+      <section class="border-t border-stone-200 bg-stone-50 py-(--spacing-section)">
+        <div class="shell">
+          <div class="grid gap-x-16 gap-y-10 lg:grid-cols-12">
+            <div class="lg:col-span-4">
+              <span class="eyebrow">Questions</span>
+              <h2 class="mt-6 text-h3 max-w-[16ch]">{shortTitle}, in practice.</h2>
+              <a href={url('/faq')} class="link-rule mt-8">
+                General questions
+                <Icon name="arrow-right" size={16} />
+              </a>
+            </div>
+
+            <div class="lg:col-span-7 lg:col-start-6">
+              <FAQAccordion items={faqs} idPrefix={`faq-${area.id}`} />
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- ------------------------------------------------------------ Related -->
+  {
+    related.length > 0 && (
+      <section class="bg-paper py-(--spacing-section-sm)">
+        <div class="shell">
+          <span class="eyebrow">Related reading</span>
+          <div class="mt-8 grid gap-x-12 md:grid-cols-2">
+            {related.map((entry) => (
+              <InsightCard entry={entry} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <!-- ----------------------------------------------- Disclaimer + next steps -->
+  <section class="border-t border-stone-200 bg-paper py-(--spacing-section-sm)">
+    <div class="shell">
+      <LegalDisclaimer
+        text={`${site.compliance.pageDisclaimer} Whether any of the work described on this page can be undertaken in your matter depends on its particular facts.`}
+      />
+      <PracticeAreaNavigation current={area.id} class="mt-14" />
+    </div>
+  </section>
+
+  <ConsultationCTA
+    heading={`Discuss a ${shortTitle.toLowerCase()} matter.`}
+    lede="Describe the situation in a few lines. You will receive a reply setting out whether it falls within the practice and what a first consultation would involve."
+  />
+</BaseLayout>
+
+<style>
+  .service-grid {
+    display: grid;
+    gap: 0;
+    border-top: 1px solid var(--color-ink-800);
+  }
+
+  @media (min-width: 640px) {
+    .service-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 2.5rem;
+    }
+  }
+
+  /* `.service` and `.process-row` sit on <Reveal> roots. Astro does not extend
+     scoped styles to a child component's root element, so they are declared
+     globally; the names are unique to this page. */
+  :global(.service) {
+    padding-block: 1.6rem;
+    border-bottom: 1px solid var(--color-stone-200);
+  }
+
+  .service__title {
+    font-family: var(--font-display);
+    font-size: 1.0625rem;
+    color: var(--color-ink-800);
+  }
+
+  .service__body {
+    margin-top: 0.6rem;
+    font-size: 0.9375rem;
+    line-height: 1.7;
+    color: var(--color-body);
+  }
+
+  .situation {
+    position: relative;
+    padding: 1.1rem 0 1.1rem 2rem;
+    border-top: 1px solid rgb(255 255 255 / 0.14);
+    color: color-mix(in srgb, var(--color-paper) 82%, transparent);
+    font-size: 1rem;
+  }
+
+  .situation:last-child {
+    border-bottom: 1px solid rgb(255 255 255 / 0.14);
+  }
+
+  .situation::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 1.75em;
+    width: 0.75rem;
+    height: 1px;
+    background-color: var(--color-bronze-500);
+  }
+
+  :global(.process-row) {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    gap: 1rem;
+    padding-block: 1.6rem;
+    border-top: 1px solid var(--color-stone-200);
+  }
+
+  :global(.process-row:first-child) {
+    border-top-color: var(--color-ink-800);
+  }
+
+  :global(.process-row:last-child) {
+    border-bottom: 1px solid var(--color-stone-200);
+  }
+
+  .process-row__n {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    color: var(--color-bronze-600);
+    padding-top: 0.35rem;
+  }
+
+  .process-row__title {
+    font-size: 1.125rem;
+    color: var(--color-ink-800);
+  }
+
+  .process-row__body {
+    margin-top: 0.6rem;
+    max-width: 58ch;
+    color: var(--color-body);
+  }
+</style>

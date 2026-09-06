@@ -1,0 +1,125 @@
+---
+/**
+ * Entry disclaimer.
+ *
+ * Rendered only when `compliance.entryDisclaimerEnabled` is true in
+ * src/config/site.ts. Some advocates are advised to gate their site behind an
+ * acknowledgement of the Bar Council of India's rules on solicitation; others
+ * are not. This is left off by default and is the advocate's decision.
+ *
+ * ⚖️ The wording lives in src/config/site.ts › compliance.entryDisclaimer and
+ *    must be reviewed before it is switched on.
+ */
+import { site } from '../config/site';
+import Logo from './Logo.astro';
+
+const copy = site.compliance.entryDisclaimer;
+---
+
+<div data-entry-disclaimer class="entry-gate" hidden>
+  <div class="entry-gate__panel" role="dialog" aria-modal="true" aria-labelledby="entry-gate-title">
+    <Logo variant="stacked" size="lg" class="mx-auto" />
+
+    <h1 id="entry-gate-title" class="mt-10 text-h3 text-ink-800">{copy.heading}</h1>
+
+    <div class="mt-5 grid gap-4 text-sm text-body">
+      {copy.body.map((paragraph) => <p>{paragraph}</p>)}
+    </div>
+
+    <div class="mt-9 flex flex-col gap-3 sm:flex-row-reverse">
+      <button type="button" data-entry-accept class="entry-gate__accept">{copy.acceptLabel}</button>
+      <a href="https://www.google.com" class="entry-gate__decline">{copy.declineLabel}</a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .entry-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    padding: var(--spacing-gutter);
+    background-color: color-mix(in srgb, var(--color-ink-950) 55%, transparent);
+    backdrop-filter: blur(6px);
+    overflow-y: auto;
+  }
+
+  .entry-gate[hidden] {
+    display: none;
+  }
+
+  .entry-gate__panel {
+    width: min(38rem, 100%);
+    margin-block: auto;
+    padding: clamp(1.75rem, 5vw, 3rem);
+    background-color: var(--color-paper);
+    border-top: 2px solid var(--color-bronze-500);
+    box-shadow: var(--shadow-lifted);
+  }
+
+  .entry-gate__accept,
+  .entry-gate__decline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 3rem;
+    padding-inline: 1.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    transition: background-color 260ms var(--ease-out-soft);
+  }
+
+  .entry-gate__accept {
+    background-color: var(--color-ink-800);
+    color: var(--color-paper);
+    flex: 1;
+  }
+
+  .entry-gate__accept:hover {
+    background-color: var(--color-ink-700);
+  }
+
+  .entry-gate__decline {
+    border: 1px solid var(--color-stone-300);
+    color: var(--color-ink-800);
+  }
+
+  .entry-gate__decline:hover {
+    background-color: var(--color-stone-50);
+  }
+</style>
+
+<script>
+  const KEY = 'sh-entry-disclaimer-accepted';
+  const gate = document.querySelector<HTMLElement>('[data-entry-disclaimer]');
+
+  if (gate) {
+    let accepted = false;
+    try {
+      accepted = sessionStorage.getItem(KEY) === 'yes';
+    } catch {
+      // Storage unavailable (private mode); show the gate each visit.
+    }
+
+    if (!accepted) {
+      gate.hidden = false;
+      document.body.style.overflow = 'hidden';
+      gate.querySelector<HTMLButtonElement>('[data-entry-accept]')?.focus();
+    }
+
+    gate.querySelector('[data-entry-accept]')?.addEventListener('click', () => {
+      try {
+        sessionStorage.setItem(KEY, 'yes');
+      } catch {
+        /* ignore */
+      }
+      gate.hidden = true;
+      document.body.style.overflow = '';
+    });
+  }
+</script>

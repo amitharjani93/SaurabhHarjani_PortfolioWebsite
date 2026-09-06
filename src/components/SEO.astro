@@ -1,0 +1,133 @@
+---
+import { site } from '../config/site';
+import { absoluteUrl } from '../lib/url';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Path of the current page, e.g. '/practice-areas'. */
+  path: string;
+  /** 'website' for pages, 'article' for insights, 'profile' for the profile page. */
+  type?: 'website' | 'article' | 'profile';
+  /** Skip the "— Saurabh Harjani" suffix (used on the home page). */
+  bareTitle?: boolean;
+  noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  /** Extra JSON-LD graph nodes contributed by the page. */
+  schema?: Record<string, unknown>[];
+}
+
+const {
+  title,
+  description = site.meta.defaultDescription,
+  path,
+  type = 'website',
+  bareTitle = false,
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  schema = [],
+} = Astro.props;
+
+const pageTitle = bareTitle ? title : site.meta.titleTemplate.replace('%s', title);
+const canonical = absoluteUrl(path, Astro.site);
+const ogImage = absoluteUrl(site.assets.ogImage, Astro.site);
+
+/**
+ * Structured data.
+ *
+ * Only facts that are actually configured are emitted. Optional nodes —
+ * address, telephone, email, bar credentials — appear once the corresponding
+ * value is filled in at src/config/site.ts. Nothing here is invented.
+ */
+const address = site.contact.address;
+const hasPostalAddress = Boolean(address.line1 || address.city);
+
+const person: Record<string, unknown> = {
+  '@type': 'Person',
+  '@id': absoluteUrl('/#person', Astro.site),
+  name: site.name,
+  jobTitle: site.title,
+  url: absoluteUrl('/', Astro.site),
+  description: site.profile.summary,
+  knowsAbout: ['Trade Marks', 'Intellectual Property', 'Real Estate Law', 'Property Law', 'Civil Litigation'],
+};
+
+if (site.contact.email) person.email = site.contact.email;
+if (site.contact.phone) person.telephone = site.contact.phone;
+if (site.assets.portrait) person.image = absoluteUrl(site.assets.portrait, Astro.site);
+
+const sameAs = [site.social.linkedin, site.social.x, site.social.instagram].filter(Boolean);
+if (sameAs.length) person.sameAs = sameAs;
+
+if (site.bar.council) {
+  person.memberOf = { '@type': 'Organization', name: site.bar.council };
+}
+
+const legalService: Record<string, unknown> = {
+  '@type': 'LegalService',
+  '@id': absoluteUrl('/#practice', Astro.site),
+  name: site.practiceName,
+  url: absoluteUrl('/', Astro.site),
+  description: site.meta.defaultDescription,
+  provider: { '@id': absoluteUrl('/#person', Astro.site) },
+  areaServed: address.country,
+  knowsLanguage: site.profile.languages.length ? site.profile.languages : undefined,
+};
+
+if (site.contact.email) legalService.email = site.contact.email;
+if (site.contact.phone) legalService.telephone = site.contact.phone;
+
+if (hasPostalAddress) {
+  legalService.address = {
+    '@type': 'PostalAddress',
+    streetAddress: [address.line1, address.line2].filter(Boolean).join(', ') || undefined,
+    addressLocality: address.city ?? undefined,
+    addressRegion: address.state ?? undefined,
+    postalCode: address.postalCode ?? undefined,
+    addressCountry: address.country,
+  };
+}
+
+const website = {
+  '@type': 'WebSite',
+  '@id': absoluteUrl('/#website', Astro.site),
+  url: absoluteUrl('/', Astro.site),
+  name: site.practiceName,
+  inLanguage: 'en-IN',
+  publisher: { '@id': absoluteUrl('/#person', Astro.site) },
+};
+
+const graph = [person, legalService, website, ...schema];
+const jsonLd = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }, (_k, v) =>
+  v === undefined ? undefined : v,
+);
+---
+
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+
+{noindex && <meta name="robots" content="noindex,nofollow" />}
+{!noindex && <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />}
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={site.practiceName} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content={site.meta.locale} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:alt" content={`${site.name} — ${site.tagline}`} />
+
+{publishedTime && <meta property="article:published_time" content={publishedTime} />}
+{modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+{site.meta.twitterHandle && <meta name="twitter:creator" content={`@${site.meta.twitterHandle}`} />}
+
+<script type="application/ld+json" is:inline set:html={jsonLd} />

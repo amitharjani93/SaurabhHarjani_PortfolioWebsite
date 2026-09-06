@@ -1,0 +1,59 @@
+---
+/**
+ * Compliance notice. Wording is centralised in src/config/site.ts › compliance.
+ * ⚖️ Must be reviewed by the advocate before publication.
+ */
+import { site } from '../config/site';
+
+interface Props {
+  variant?: 'page' | 'form' | 'inline';
+  text?: string;
+  class?: string;
+}
+
+const { variant = 'page', text, class: className = '' } = Astro.props;
+
+const copy = text ?? (variant === 'form' ? site.compliance.formNotice : site.compliance.pageDisclaimer);
+---
+
+<aside class:list={['disclaimer', `disclaimer--${variant}`, className]} role="note">
+  <span class="disclaimer__label">
+    {variant === 'form' ? 'Before you write' : 'Please note'}
+  </span>
+  <p class="disclaimer__text">{copy}</p>
+  <slot />
+</aside>
+
+<style>
+  .disclaimer {
+    border-left: 1px solid var(--color-bronze-500);
+    padding: 0.25rem 0 0.25rem 1.5rem;
+  }
+
+  .disclaimer--form {
+    background-color: var(--color-stone-50);
+    border-left-width: 2px;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .disclaimer__label {
+    display: block;
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-bronze-700);
+  }
+
+  .disclaimer__text {
+    margin-top: 0.6rem;
+    font-size: var(--text-caption);
+    line-height: 1.7;
+    color: var(--color-muted);
+    max-width: 68ch;
+  }
+
+  .disclaimer--form .disclaimer__text {
+    color: var(--color-body);
+  }
+</style>

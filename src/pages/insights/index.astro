@@ -1,0 +1,90 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import InsightCard from '../../components/InsightCard.astro';
+import ConsultationCTA from '../../components/ConsultationCTA.astro';
+import LegalDisclaimer from '../../components/LegalDisclaimer.astro';
+import Reveal from '../../components/Reveal.astro';
+import { url } from '../../lib/url';
+
+const entries = (await getCollection('insights', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.publishDate.getTime() - a.data.publishDate.getTime(),
+);
+
+const categories = [...new Set(entries.map((e) => e.data.category))].sort();
+const hasSamples = entries.some((e) => e.data.sample);
+---
+
+<BaseLayout
+  title="Insights"
+  description="Short notes on trade marks, intellectual property, property and civil matters — written for people dealing with the question, not for other lawyers."
+  path="/insights"
+>
+  <PageHeader
+    eyebrow="Insights"
+    title="Notes on questions that come up often."
+    lede="Short, practical pieces on the points that cause the most difficulty. General information rather than advice on any particular matter."
+    crumbs={[{ label: 'Insights' }]}
+  />
+
+  <section class="bg-paper py-(--spacing-section)">
+    <div class="shell">
+      {
+        entries.length === 0 ? (
+          /* Empty state — the section stays composed with no articles. */
+          <div class="mx-auto max-w-xl border-t border-ink-800 pt-10 text-center">
+            <h2 class="text-h3">Nothing published yet.</h2>
+            <p class="mt-5 text-body">
+              Articles will appear here as they are written. In the meantime, the practice area pages
+              set out how each type of matter is usually handled.
+            </p>
+            <a href={url('/practice-areas')} class="link-rule mt-9">Practice areas</a>
+          </div>
+        ) : (
+          <>
+            {hasSamples && (
+              <p class="mb-10 border-l border-bronze-500 pl-5 text-caption text-muted max-w-[60ch]">
+                {/* Remove these files from src/content/insights/ when real articles are added. */}
+                Articles marked <strong class="text-ink-700">Sample</strong> are placeholder content
+                written to demonstrate the format. They are not legal advice or published commentary.
+              </p>
+            )}
+
+            {categories.length > 1 && (
+              <ul class="mb-12 flex flex-wrap gap-x-2 gap-y-2" aria-label="Categories in this collection">
+                {categories.map((category) => (
+                  <li class="category-chip">{category}</li>
+                ))}
+              </ul>
+            )}
+
+            <div class="grid gap-x-14 lg:grid-cols-2">
+              {entries.map((entry, i) => (
+                <Reveal delay={Math.min(i, 4) * 70}>
+                  <InsightCard entry={entry} />
+                </Reveal>
+              ))}
+            </div>
+          </>
+        )
+      }
+    </div>
+  </section>
+
+  <div class="shell pb-(--spacing-section-sm)">
+    <LegalDisclaimer text="Articles in this section are general information about the law and procedure. They are not advice on any particular matter and should not be relied upon as such." />
+  </div>
+
+  <ConsultationCTA variant="band" />
+</BaseLayout>
+
+<style>
+  .category-chip {
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--color-stone-200);
+    font-size: var(--text-caption);
+    letter-spacing: 0.06em;
+    color: var(--color-muted);
+  }
+</style>
