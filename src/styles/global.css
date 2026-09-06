@@ -48,7 +48,8 @@
 
   /* --- Text -------------------------------------------------------------- */
   --color-body: #414a5e;
-  --color-muted: #6a7385;
+  /* Holds 4.5:1 at 13px on both paper and the stone surfaces. */
+  --color-muted: #5c6576;
 
   /* --- Typography -------------------------------------------------------- */
   --font-display: 'Playfair Display', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;

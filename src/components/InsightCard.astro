@@ -7,11 +7,14 @@ import { formatDate, isoDate, readingTime } from '../lib/format';
 interface Props {
   entry: CollectionEntry<'insights'>;
   variant?: 'row' | 'stacked';
+  /** Use 2 when the cards follow the page h1 directly, 3 under a section heading. */
+  headingLevel?: 2 | 3;
 }
 
-const { entry, variant = 'row' } = Astro.props;
+const { entry, variant = 'row', headingLevel = 3 } = Astro.props;
 const { title, description, category, publishDate, sample } = entry.data;
 const minutes = readingTime(entry.body ?? '');
+const Heading = `h${headingLevel}` as 'h2' | 'h3';
 ---
 
 <article class:list={['insight', `insight--${variant}`]}>
@@ -27,7 +30,7 @@ const minutes = readingTime(entry.body ?? '');
     {sample && <span class="insight__sample">Sample</span>}
   </div>
 
-  <h3 class="insight__title">{title}</h3>
+  <Heading class="insight__title">{title}</Heading>
   <p class="insight__description">{description}</p>
 
   <span class="insight__more">

@@ -62,7 +62,7 @@ const hasSamples = entries.some((e) => e.data.sample);
             <div class="grid gap-x-14 lg:grid-cols-2">
               {entries.map((entry, i) => (
                 <Reveal delay={Math.min(i, 4) * 70}>
-                  <InsightCard entry={entry} />
+                  <InsightCard entry={entry} headingLevel={2} />
                 </Reveal>
               ))}
             </div>

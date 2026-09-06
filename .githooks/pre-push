@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# Runs the fast tier before anything leaves the machine: type check, unit and
+# contract tests, production build, build-output assertions. Around a minute.
+#
+# Enable once per clone:
+#   npm run hooks:install
+#
+# The browser suite is not run here — it belongs in CI. Run it yourself with
+# `npm run test:e2e` when you have changed navigation, the form or layout.
+#
+# To bypass in a genuine emergency: git push --no-verify
+
+set -e
+
+echo "→ pre-push: npm run verify"
+npm run verify
+
+echo "✓ pre-push: all checks passed"

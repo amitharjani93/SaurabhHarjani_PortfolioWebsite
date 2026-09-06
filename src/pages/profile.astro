@@ -93,11 +93,9 @@ const hasCredentials = credentialBlocks.length > 0 || barLines.length > 0 || p.j
           <dl class="grid gap-0">
             {
               p.philosophy.map((item, i) => (
-                <Reveal delay={i * 70}>
-                  <div class="philosophy-item">
-                    <dt class="philosophy-item__heading">{item.heading}</dt>
-                    <dd class="philosophy-item__body">{item.body}</dd>
-                  </div>
+                <Reveal delay={i * 70} class="philosophy-item">
+                  <dt class="philosophy-item__heading">{item.heading}</dt>
+                  <dd class="philosophy-item__body">{item.body}</dd>
                 </Reveal>
               ))
             }
@@ -229,7 +227,9 @@ const hasCredentials = credentialBlocks.length > 0 || barLines.length > 0 || p.j
 </BaseLayout>
 
 <style>
-  .philosophy-item {
+  /* Sits on a <Reveal> root, which scoped styles do not reach. A <dl> may
+     contain only one level of <div> wrapper, so Reveal is the wrapper. */
+  :global(.philosophy-item) {
     display: grid;
     gap: 0.75rem;
     padding-block: 1.75rem;
@@ -276,7 +276,7 @@ const hasCredentials = credentialBlocks.length > 0 || barLines.length > 0 || p.j
   .focus-item__numeral {
     font-family: var(--font-display);
     font-size: 0.75rem;
-    color: var(--color-bronze-600);
+    color: var(--color-bronze-700);
     padding-top: 0.3rem;
   }
 

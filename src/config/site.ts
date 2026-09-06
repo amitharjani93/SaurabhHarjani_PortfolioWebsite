@@ -263,7 +263,7 @@ export const site = {
   // 10. METADATA DEFAULTS
   // --------------------------------------------------------------------------
   meta: {
-    defaultTitle: 'Saurabh Harjani — Advocate | Intellectual Property, Property & Civil Matters',
+    defaultTitle: 'Saurabh Harjani — Advocate | Trade Marks, Property & Civil Matters',
     titleTemplate: '%s — Saurabh Harjani',
     defaultDescription:
       'Independent advocate advising on trade marks and intellectual property, property and real estate matters, and civil disputes. Consultations by appointment.',

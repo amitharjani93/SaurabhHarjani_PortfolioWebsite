@@ -45,7 +45,12 @@ const schema = [
       {
         areas.map((area, i) => (
           <Reveal delay={i * 80}>
-            <PracticeAreaCard area={area} variant={i === 0 ? 'feature' : 'row'} serviceCount={4} />
+            <PracticeAreaCard
+              area={area}
+              variant={i === 0 ? 'feature' : 'row'}
+              serviceCount={4}
+              headingLevel={2}
+            />
           </Reveal>
         ))
       }

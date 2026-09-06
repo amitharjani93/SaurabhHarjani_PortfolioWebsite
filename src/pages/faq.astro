@@ -73,7 +73,10 @@ const schema = [
                   <div class="flex flex-wrap items-baseline justify-between gap-4">
                     <h2 class="text-h3">{group.title}</h2>
                     {'href' in group && group.href && (
-                      <a href={url(group.href)} class="text-caption tracking-[0.08em] uppercase text-bronze-700 underline underline-offset-4 hover:text-ink-800">
+                      <a
+                        href={url(group.href)}
+                        class="inline-flex min-h-11 items-center text-caption tracking-[0.08em] uppercase text-bronze-700 underline underline-offset-4 hover:text-ink-800"
+                      >
                         Practice area
                       </a>
                     )}

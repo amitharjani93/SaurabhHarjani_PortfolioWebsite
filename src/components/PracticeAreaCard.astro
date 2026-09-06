@@ -14,11 +14,19 @@ interface Props {
   variant?: 'feature' | 'row';
   /** Number of service categories to preview. */
   serviceCount?: number;
+  /** Use 2 when the rows follow the page h1 directly, 3 under a section heading. */
+  headingLevel?: 2 | 3;
 }
 
-const { area, variant = 'row', serviceCount = variant === 'feature' ? 4 : 3 } = Astro.props;
+const {
+  area,
+  variant = 'row',
+  serviceCount = variant === 'feature' ? 4 : 3,
+  headingLevel = 3,
+} = Astro.props;
 const { title, summary, statement, numeral, services } = area.data;
 const href = url(`/practice-areas/${area.id}`);
+const Heading = `h${headingLevel}` as 'h2' | 'h3';
 ---
 
 <article class:list={['pa-row', `pa-row--${variant}`]}>
@@ -27,7 +35,7 @@ const href = url(`/practice-areas/${area.id}`);
   <div class="pa-row__numeral" aria-hidden="true">{numeral}</div>
 
   <div class="pa-row__body">
-    <h3 class="pa-row__title">{title}</h3>
+    <Heading class="pa-row__title">{title}</Heading>
 
     {variant === 'feature' && <p class="pa-row__statement">{statement}</p>}
 
@@ -84,7 +92,7 @@ const href = url(`/practice-areas/${area.id}`);
     font-family: var(--font-display);
     font-size: 0.8125rem;
     letter-spacing: 0.06em;
-    color: var(--color-bronze-600);
+    color: var(--color-bronze-700);
     font-variant-numeric: tabular-nums;
     padding-top: 0.35rem;
   }

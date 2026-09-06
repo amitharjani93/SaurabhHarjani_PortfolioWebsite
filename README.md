@@ -12,16 +12,17 @@ files with almost no client-side JavaScript, and deploys to GitHub Pages.
 
 1. [Requirements](#requirements)
 2. [Development](#development)
-3. [Content configuration — what to edit](#content-configuration--what-to-edit)
-4. [Adding an Insight article](#adding-an-insight-article)
-5. [Adding a practice area](#adding-a-practice-area)
-6. [Consultation inquiries and the future backend](#consultation-inquiries-and-the-future-backend)
-7. [Analytics](#analytics)
-8. [Production build](#production-build)
-9. [GitHub Pages deployment](#github-pages-deployment)
-10. [Custom domain](#custom-domain)
-11. [Before launch — outstanding items](#before-launch--outstanding-items)
-12. [Project structure](#project-structure)
+3. [Testing](#testing)
+4. [Content configuration — what to edit](#content-configuration--what-to-edit)
+5. [Adding an Insight article](#adding-an-insight-article)
+6. [Adding a practice area](#adding-a-practice-area)
+7. [Consultation inquiries and the future backend](#consultation-inquiries-and-the-future-backend)
+8. [Analytics](#analytics)
+9. [Production build](#production-build)
+10. [GitHub Pages deployment](#github-pages-deployment)
+11. [Custom domain](#custom-domain)
+12. [Before launch — outstanding items](#before-launch--outstanding-items)
+13. [Project structure](#project-structure)
 
 ---
 
@@ -50,9 +51,37 @@ npm run dev       # http://localhost:4321/SaurabhHarjani_PortfolioWebsite
 | `npm run build` | Type-check, then produce the static site in `dist/` |
 | `npm run build:fast` | Build without the type-check |
 | `npm run preview` | Serve `dist/` exactly as it will be deployed |
+| `npm run verify` | **Run before every pull request** — types, unit tests, build, build-output assertions |
+| `npm run test:unit` | Unit and content-contract tests |
+| `npm run test:build` | Assertions against the built `dist/` |
+| `npm run test:e2e` | Browser, accessibility and responsive tests |
+| `npm run hooks:install` | Enable the pre-push hook that runs `verify` |
+
+Testing is documented in full in **[TESTING.md](TESTING.md)** — what each tier
+covers, how CI is wired, and how to make the checks required before a merge.
 
 > The dev URL includes the repository name because the site is configured for a
 > GitHub Pages *project* site. See [Custom domain](#custom-domain) to change it.
+
+---
+
+## Testing
+
+```bash
+npm run hooks:install    # once per clone — runs `verify` automatically on push
+npm run verify           # before every pull request (~1 minute)
+npm run test:e2e:install # once — downloads Chromium
+npm run test:e2e         # browser, accessibility and responsive tests
+```
+
+Three tiers: pure-logic and content-contract unit tests, assertions against the
+built HTML (links, metadata, structured data, advertising-compliance copy), and
+a browser suite covering interaction, accessibility and progressive
+enhancement. All three run on every pull request and again before anything is
+deployed.
+
+**[TESTING.md](TESTING.md)** documents what each tier covers, how to add tests,
+and how to make the checks required before a merge.
 
 ---
 
