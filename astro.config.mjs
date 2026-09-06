@@ -20,7 +20,7 @@ import tailwindcss from '@tailwindcss/vite';
  * When a custom domain is added later, set SITE to that domain and
  * BASE_PATH back to "/". Nothing else in the codebase needs to change.
  */
-const SITE = process.env.SITE ?? 'https://saurabhharjani.github.io';
+const SITE = process.env.SITE ?? 'https://amitharjani93.github.io';
 const BASE_PATH = process.env.BASE_PATH ?? '/SaurabhHarjani_PortfolioWebsite';
 
 export default defineConfig({
