@@ -55,11 +55,11 @@ export const site = {
   // --------------------------------------------------------------------------
   contact: {
     /** e.g. 'contact@saurabhharjani.com' */
-    email: null as string | null,
+    email: 'saurabhharjani1996@gmail.com' as string | null,
     /** Display form, e.g. '+91 98XXX XXXXX' */
-    phone: null as string | null,
+    phone: '+91 75037 82318' as string | null,
     /** Digits only with country code, e.g. '9198XXXXXXXX'. Used for wa.me links. */
-    whatsapp: null as string | null,
+    whatsapp: '917503782318' as string | null,
     /** Set to false if the advocate prefers not to advertise a WhatsApp channel. */
     whatsappEnabled: false,
     address: {
@@ -260,7 +260,24 @@ export const site = {
   },
 
   // --------------------------------------------------------------------------
-  // 10. METADATA DEFAULTS
+  // 10. PUBLICATION STATE
+  // --------------------------------------------------------------------------
+  /**
+   * Whether search engines may index the site.
+   *
+   * Keep this FALSE while the site is a review copy. GitHub Pages URLs are
+   * public whether or not they are advertised, and the legal disclaimer,
+   * privacy policy and practice-area copy are drafts until the advocate has
+   * approved them — draft legal text sitting in Google's index is difficult to
+   * undo, and the sample articles would be indexed alongside it.
+   *
+   * ⚖️  Set to true only once the pre-launch checklist in the README is
+   *     complete and the advocate has signed off the wording.
+   */
+  indexable: false,
+
+  // --------------------------------------------------------------------------
+  // 11. METADATA DEFAULTS
   // --------------------------------------------------------------------------
   meta: {
     defaultTitle: 'Saurabh Harjani — Advocate | Trade Marks, Property & Civil Matters',
@@ -286,5 +303,10 @@ export const hasContactDetails =
 export function formattedAddress(): string[] {
   const a = site.contact.address;
   const cityLine = [a.city, a.state, a.postalCode].filter(Boolean).join(', ');
+
+  // A country on its own is not an address. Without a street or a locality
+  // there is nothing worth printing under a "Chambers" heading.
+  if (!a.line1 && !a.line2 && !cityLine) return [];
+
   return [a.line1, a.line2, cityLine || null, a.country].filter((v): v is string => Boolean(v));
 }

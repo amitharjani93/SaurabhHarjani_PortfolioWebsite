@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { base, metaContent, pages, publicPages, siteOrigin } from '../support/dist';
+import { site } from '../../src/config/site';
 
 /**
  * Metadata and structured data.
@@ -40,8 +41,16 @@ describe('page metadata', () => {
     expect(canonical.replace(/\/$/, ''), route).toBe(expected.replace(/\/$/, ''));
   });
 
-  it.each(publicPages)('$route is indexable', ({ dom }) => {
-    expect(dom.querySelector('meta[name="robots"]')?.getAttribute('content')).toContain('index');
+  it.each(publicPages)('$route follows the publication state', ({ dom, route }) => {
+    const robots = dom.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '';
+    expect(robots, route).toContain(site.indexable ? 'index' : 'noindex');
+  });
+
+  it('keeps every page out of search results while the site is a review copy', () => {
+    if (site.indexable) return;
+    for (const page of pages) {
+      expect(metaContent(page, 'meta[name="robots"]'), page.route).toBe('noindex,nofollow');
+    }
   });
 
   it('keeps the 404 page out of the index', () => {

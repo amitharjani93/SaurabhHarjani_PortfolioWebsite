@@ -76,7 +76,10 @@ const address = formattedAddress();
             {hasContactDetails && (
               <address class="mt-8 grid gap-2.5 border-t border-stone-200 pt-7 text-sm not-italic text-body">
                 {site.contact.email && (
-                  <a href={`mailto:${site.contact.email}`} class="inline-flex items-center gap-3 hover:text-ink-800">
+                  <a
+                    href={`mailto:${site.contact.email}`}
+                    class="inline-flex min-h-11 items-center gap-3 hover:text-ink-800"
+                  >
                     <Icon name="mail" size={16} class="text-bronze-600" />
                     {site.contact.email}
                   </a>

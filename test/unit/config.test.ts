@@ -93,6 +93,19 @@ describe('placeholder handling', () => {
     for (const line of formattedAddress()) expect(line.trim()).not.toBe('');
   });
 
+  it('prints no address at all until there is a street or a locality', () => {
+    // The country is always set, so a naive filter would render "Chambers:
+    // India" on the contact page and in the footer.
+    const a = site.contact.address;
+    const hasPlace = Boolean(a.line1 || a.line2 || a.city || a.state || a.postalCode);
+    expect(formattedAddress().length > 0).toBe(hasPlace);
+  });
+
+  it('includes the country once a real address is supplied', () => {
+    if (!site.contact.address.line1 && !site.contact.address.city) return;
+    expect(formattedAddress().at(-1)).toBe(site.contact.address.country);
+  });
+
   it('keeps every credential list an array, so the profile page can hide empty sections', () => {
     for (const list of [
       site.profile.experience,
@@ -145,6 +158,37 @@ describe('compliance configuration', () => {
 describe('privacy defaults', () => {
   it('ships with analytics disabled', () => {
     expect(site.analytics.provider).toBe('none');
+  });
+});
+
+describe('publication state', () => {
+  it('stays out of search results until the launch checklist is complete', () => {
+    // Flipping this to true is a deliberate launch step, not a default.
+    // If this fails, confirm the advocate has approved the legal copy.
+    expect(site.indexable).toBe(false);
+  });
+});
+
+describe('contact details', () => {
+  it('gives the phone number in a form the tel: link can use', () => {
+    if (!site.contact.phone) return;
+    const dialled = site.contact.phone.replace(/\s/g, '');
+    expect(dialled, 'include the country code, e.g. +91 75037 82318').toMatch(/^\+\d{7,15}$/);
+  });
+
+  it('gives a complete email address', () => {
+    if (!site.contact.email) return;
+    expect(site.contact.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/);
+  });
+
+  it('stores the WhatsApp number as bare digits with a country code', () => {
+    if (!site.contact.whatsapp) return;
+    // wa.me rejects spaces, plus signs and punctuation.
+    expect(site.contact.whatsapp).toMatch(/^\d{11,15}$/);
+  });
+
+  it('does not advertise WhatsApp without a number to route it to', () => {
+    if (site.contact.whatsappEnabled) expect(site.contact.whatsapp).toBeTruthy();
   });
 });
 

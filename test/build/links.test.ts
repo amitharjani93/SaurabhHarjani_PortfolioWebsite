@@ -152,14 +152,22 @@ describe('sitemap and robots', () => {
     expect(xml).not.toContain('/404');
   });
 
-  it('points robots.txt at the sitemap on the deployed origin', async () => {
+  it('serves a robots.txt that matches the publication state', async () => {
     const { readFileSync } = await import('node:fs');
     const { join } = await import('node:path');
     const { distDir, siteOrigin } = await import('../support/dist');
+    const { site } = await import('../../src/config/site');
 
     const robots = readFileSync(join(distDir, 'robots.txt'), 'utf8');
-    expect(robots).toContain('Sitemap:');
-    expect(robots).toContain(`${siteOrigin}${base}/sitemap-index.xml`);
-    expect(robots).not.toContain('Disallow: /');
+
+    if (site.indexable) {
+      expect(robots).toContain('Sitemap:');
+      expect(robots).toContain(`${siteOrigin}${base}/sitemap-index.xml`);
+      expect(robots).not.toContain('Disallow: /');
+    } else {
+      // A review copy must ask crawlers to stay away entirely.
+      expect(robots).toContain('Disallow: /');
+      expect(robots).not.toContain('Sitemap:');
+    }
   });
 });

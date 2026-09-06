@@ -34,6 +34,9 @@ const pageTitle = bareTitle ? title : site.meta.titleTemplate.replace('%s', titl
 const canonical = absoluteUrl(path, Astro.site);
 const ogImage = absoluteUrl(site.assets.ogImage, Astro.site);
 
+// A page is indexable only if the site as a whole has been published.
+const blockIndexing = noindex || !site.indexable;
+
 /**
  * Structured data.
  *
@@ -109,8 +112,8 @@ const jsonLd = JSON.stringify({ '@context': 'https://schema.org', '@graph': grap
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
 
-{noindex && <meta name="robots" content="noindex,nofollow" />}
-{!noindex && <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />}
+{blockIndexing && <meta name="robots" content="noindex,nofollow" />}
+{!blockIndexing && <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />}
 
 <meta property="og:type" content={type} />
 <meta property="og:site_name" content={site.practiceName} />

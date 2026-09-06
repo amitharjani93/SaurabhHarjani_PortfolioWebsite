@@ -112,12 +112,17 @@ test.describe('validation', () => {
 });
 
 test.describe('submission', () => {
-  test('states plainly that online submission is unavailable, rather than pretending', async ({ page }) => {
+  /** The transport the current build is configured for. */
+  async function transport(page: import('@playwright/test').Page) {
     const form = page.locator('form[data-consultation-form]');
-    const endpoint = (await form.getAttribute('data-endpoint')) ?? '';
-    const email = (await form.getAttribute('data-email')) ?? '';
+    return {
+      endpoint: (await form.getAttribute('data-endpoint')) ?? '',
+      email: (await form.getAttribute('data-email')) ?? '',
+    };
+  }
 
-    // Guards the current build: no endpoint and no published email address.
+  test('states plainly that online submission is unavailable, rather than pretending', async ({ page }) => {
+    const { endpoint, email } = await transport(page);
     test.skip(endpoint !== '' || email !== '', 'a delivery transport is configured');
 
     await fillValidInquiry(page);
@@ -128,11 +133,39 @@ test.describe('submission', () => {
     await expect(result).not.toContainText(AFFIRMATIVE_DELIVERY);
   });
 
+  test('hands the inquiry to the mail client, and says nothing has been sent yet', async ({ page }) => {
+    const { endpoint, email } = await transport(page);
+    test.skip(endpoint !== '' || email === '', 'the email fallback is not the active transport');
+
+    // The page asks the browser to open a mailto: URL, which has no handler here.
+    await page.route('mailto:**', (route) => route.abort());
+
+    await fillValidInquiry(page);
+    await page.getByRole('button', { name: /Compose Inquiry Email/i }).click();
+
+    const result = page.locator('[data-result]');
+    await expect(result).toContainText(/nothing has been sent/i);
+    await expect(result).not.toContainText(AFFIRMATIVE_DELIVERY);
+
+    const openMail = result.getByRole('link');
+    await expect(openMail).toHaveAttribute('href', /^mailto:[^?]+\?/);
+
+    const href = (await openMail.getAttribute('href')) ?? '';
+    const query = href.slice(href.indexOf('?') + 1);
+    expect(query, 'spaces must be %20; mail clients render "+" literally').not.toContain('+');
+    expect(decodeURIComponent(query)).toContain('A. Client');
+    expect(decodeURIComponent(query)).toContain('A contract was breached');
+  });
+
   test('never posts anywhere when no endpoint is configured', async ({ page }) => {
+    const { endpoint } = await transport(page);
+    test.skip(endpoint !== '', 'an endpoint is configured');
+
     const posts: string[] = [];
     page.on('request', (request) => {
       if (request.method() === 'POST') posts.push(request.url());
     });
+    await page.route('mailto:**', (route) => route.abort());
 
     await fillValidInquiry(page);
     await page.getByRole('button', { name: /Send Inquiry|Compose Inquiry Email/i }).click();
