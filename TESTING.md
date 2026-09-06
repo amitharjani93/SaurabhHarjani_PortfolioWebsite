@@ -278,6 +278,11 @@ doing that regularly, the suite is wrong, not you — fix the test.
 
 ## Adding tests
 
+Tests move with the code: **every change ships with the test change it merits,
+in the same commit.** The full mapping of change → tier lives in
+[.github/copilot-instructions.md](.github/copilot-instructions.md), which is
+also what guides AI assistants working in this repository. In short:
+
 **New pure function in `src/lib` or `src/services`** → add to `test/unit/`.
 Coverage thresholds will fail the build if it is untested.
 
@@ -297,6 +302,17 @@ Write it as a whole affirmative phrase, and add a fixture to
 **A bug reached production** → write the failing test first, in the cheapest
 tier that can catch it, then fix it. That is what keeps this suite honest
 rather than decorative.
+
+A pull request that changes source without changing tests gets a warning
+annotation from the `Tests moved with the code` CI job, and the PR template asks
+you to say why. Neither blocks the merge — a hard failure on every prose edit
+would only produce throwaway tests.
+
+To see what that job would say before you push:
+
+```bash
+sh scripts/check-test-freshness.sh origin/main
+```
 
 ---
 

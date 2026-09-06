@@ -17,6 +17,54 @@ env:
   NODE_VERSION: 22
 
 jobs:
+  # Surfaces changes that normally travel with a test change. Advisory on
+  # purpose: a hard failure on every prose tweak would only encourage
+  # throwaway tests. The signal belongs in review, not in a red X.
+  test-freshness:
+    name: Tests moved with the code
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare source and test changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          CHANGED=$(git diff --name-only "$BASE_SHA" HEAD)
+
+          changed() { echo "$CHANGED" | grep -qE "$1"; }
+          note()    { echo "::warning title=Tests may need updating::$1"; echo "- $1" >> "$GITHUB_STEP_SUMMARY"; }
+
+          echo "### Test freshness" >> "$GITHUB_STEP_SUMMARY"
+          FLAGGED=0
+
+          if changed '^src/(lib|services)/' && ! changed '^test/unit/'; then
+            note "src/lib or src/services changed with no change under test/unit/. Pure logic is held to 90% coverage — see .github/copilot-instructions.md."
+            FLAGGED=1
+          fi
+
+          if changed '^src/pages/.*\.astro$' && ! changed '^test/support/dist\.ts$'; then
+            note "A page changed but expectedRoutes in test/support/dist.ts did not. A new route must be listed there and in test/e2e/routes.ts."
+            FLAGGED=1
+          fi
+
+          if changed '^src/config/' && ! changed '^test/unit/(config|content)\.test\.ts$'; then
+            note "src/config changed with no change to the config or content contract tests."
+            FLAGGED=1
+          fi
+
+          if changed '^src/(components|layouts|styles)/' && ! changed '^test/'; then
+            note "Components, layouts or styles changed with no test change. Confirm the build-output and e2e suites still describe the new behaviour."
+            FLAGGED=1
+          fi
+
+          if [ "$FLAGGED" -eq 0 ]; then
+            echo "Nothing to flag — tests moved with the code." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   # Fast feedback: fails within a minute or so on the common mistakes.
   static:
     name: Types, unit and contract tests

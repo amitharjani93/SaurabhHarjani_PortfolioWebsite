@@ -35,6 +35,19 @@ files with almost no client-side JavaScript, and deploys to GitHub Pages.
 node -v   # should print v20.19.x or v22.x
 ```
 
+### Pinned dependencies
+
+Three versions are pinned exactly rather than with a caret. Each has a reason:
+
+| Package | Pin | Why |
+| --- | --- | --- |
+| `astro` | `5.12.9` | Later releases require Node 20.19+; loosen once everyone is on Node 22 |
+| `tailwindcss`, `@tailwindcss/vite` | `4.1.11` | Later releases import `util.styleText`, which Node 20.11 does not have |
+| `vite` | `6.3.5` | Keeps Vitest on the same major as Astro's bundled Vite |
+| `playwright-core` (override) | `1.55.0` | `@axe-core/playwright` pulls its own copy, producing a second incompatible `Page` type that breaks `astro check` |
+
+On Node 22 the first three can be relaxed. Run `npm run verify` afterwards.
+
 ---
 
 ## Development
